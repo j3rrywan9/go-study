@@ -19,6 +19,6 @@ func (de *Engine) Address() string {
 }
 
 // Setter
-func (de *Engine) SetAddress(addr string) {
-	de.address = addr
+func (de *Engine) SetAddress(address string) {
+	de.address = address
 }

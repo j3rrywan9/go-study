@@ -1,7 +1,6 @@
 package apigenerator
 
 import (
-	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -11,9 +10,10 @@ import (
 type ApiGenerator struct {
 }
 
-func (ag *ApiGenerator) LoadSchemaFromEngine(engine *engine.Engine, path string) {
+func (ag *ApiGenerator) LoadSchemasFromEngine(engine *engine.Engine, path string) string {
 	url := "http://" + engine.Address() + path
-	res, err := http.Get(url)
+	client := new(http.Client)
+	res, err := client.Get(url)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -22,5 +22,5 @@ func (ag *ApiGenerator) LoadSchemaFromEngine(engine *engine.Engine, path string)
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%s", robots)
+	return string(robots)
 }
