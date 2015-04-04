@@ -4,18 +4,21 @@ import (
 	"net/http"
 )
 
-const testAddress string = "172.16.100.79"
-
 type HttpSession struct {
-	client http.Client
+	Client http.Client
 }
 
 type Engine struct {
 	address string
-	session HttpSession
+	Session HttpSession
 }
 
+// Getter
 func (de *Engine) Address() string {
-	de.address = testAddress
 	return de.address
+}
+
+// Setter
+func (de *Engine) SetAddress(addr string) {
+	de.address = addr
 }
