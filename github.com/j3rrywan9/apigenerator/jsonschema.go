@@ -1,13 +1,19 @@
 package apigenerator
 
+import (
+	"encoding/json"
+	//"fmt"
+	//"reflect"
+)
+
 type JSONSchemaFile struct {
 	name string
-	content map[string]interface{}
+	content JSONSchemaExtended
 }
 
-type JSONSchema struct {
+type JSONSchemaExtended struct {
 	name string
-	title string
+	title map[string]interface{}
 	description string
 	required bool
 	enum []string 
@@ -25,6 +31,21 @@ type JSONSchema struct {
 	items map[string]string
 	value_type string
 	properties map[string]map[string]string
+	root string
+	extends map[string]string
+	create map[string]interface{}
+	read map[string]interface{}
+	list map[string]interface{}
+	update map[string]interface{}
+	delete map[string]interface{}
+	singleton bool
+	referenceTo string
+	operations map[string]interface{}
+	rootOperations map[string]interface{}
+}
+
+type JSONSchema struct {
+	name string
 }
 
 func (this *JSONSchemaFile) Name() string {
@@ -35,13 +56,34 @@ func (this *JSONSchemaFile) SetName(name string) {
 	this.name = name
 }
 
-func (this *JSONSchemaFile) Content() map[string]interface{} {
+func (this *JSONSchemaFile) Content() JSONSchemaExtended {
 	return this.content
 }
 
-func (this *JSONSchemaFile) SetContent(content map[string]interface{}) {
+func (this *JSONSchemaFile) SetContent(content JSONSchemaExtended) {
 	this.content = content
 }
 
-type JSONSchemaExtended struct {
+func (this *JSONSchemaExtended) Name() string {
+	return this.name
+}
+
+func (this *JSONSchemaExtended) Title() map[string]interface{} {
+	return this.title
+}
+
+func (this *JSONSchemaExtended) Description() string {
+	return this.description
+}
+
+func (this *JSONSchemaExtended) UnmarshalJSON(b []byte) error {
+	var f map[string]interface{}
+	type TitleType map[string]string
+	if err := json.Unmarshal(b, &f); err != nil {
+		return err
+	}
+	this.name = f["name"].(string)
+	this.title = f["title"].(map[string]interface{})
+	this.description = f["description"].(string)
+	return nil
 }
