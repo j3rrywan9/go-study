@@ -1,36 +1,44 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"reflect"
+	"github.com/j3rrywan9/apigenerator"
 )
 
-// interface Animal
-type Animal interface {
-	Speak() string
-}
-
-// type Cat
-type Cat struct {
-}
-
-// method Speak() of type Cat with a pointer receiver
-func (c *Cat) Speak() string {
-	return "Meow!"
-}
-
-// type Dog
-type Dog struct {
-}
-
-// method Speak() of type Dog with a pointer receiver
-func (d *Dog) Speak() string {
-	return "Woof!"
-}
-
 func main() {
-	animals := []Animal{new(Cat), new(Dog)}
-	// for loop with range
-	for _, animal := range animals {
-		fmt.Printf(animal.Speak() + "\n")
+	//data, err := ioutil.ReadFile("schemas.txt")
+	data, err := ioutil.ReadFile("schemas2.txt")
+	if err != nil {
+		panic(err)
+	}
+
+	var f map[string]apigenerator.JSONSchemaExtended
+
+	if err := json.Unmarshal(data, &f); err != nil {
+		panic(err)
+	}
+	
+	fmt.Println("The type of f is:", reflect.TypeOf(f))
+
+	var schemafiles []apigenerator.JSONSchemaFile
+
+	for file_name, file_content := range f {
+		schemafile := new(apigenerator.JSONSchemaFile)
+		schemafile.SetName(file_name)
+		schemafile.SetContent(file_content)
+		schemafiles = append(schemafiles, *schemafile)
+	}
+
+	for i := 0; i < len(schemafiles); i++ {
+		fmt.Println(schemafiles[i].Name())
+		schema := new(apigenerator.JSONSchemaExtended)
+		*schema = schemafiles[i].Content()
+		fmt.Println(schema.Name())
+		fmt.Println(schema.Title())
+		fmt.Println(schema.Description())
+		fmt.Println(reflect.TypeOf(schema.Title()))
 	}
 }
