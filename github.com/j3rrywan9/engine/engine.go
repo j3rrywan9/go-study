@@ -14,11 +14,11 @@ type Engine struct {
 }
 
 // Getter
-func (de *Engine) Address() string {
-	return de.address
+func (this *Engine) Address() string {
+	return this.address
 }
 
 // Setter
-func (de *Engine) SetAddress(address string) {
-	de.address = address
+func (this *Engine) SetAddress(address string) {
+	this.address = address
 }
