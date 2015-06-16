@@ -7,9 +7,9 @@ import (
 )
 
 type mad_database struct {
-	id		int
-	vendor 	string
-	version	string
+	id int
+	vendor string
+	version string
 }
 
 func main() {
