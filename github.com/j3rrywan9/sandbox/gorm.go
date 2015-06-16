@@ -6,7 +6,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
-type mad_database struct {
+type Mad_database struct {
 	Id int
 	Vendor string
 	Version string
@@ -21,9 +21,9 @@ func main() {
 
 	db.SingularTable(true)
 	
-	var record mad_database
+	var record Mad_database
 	
-	var records []mad_database
+	var records []Mad_database
 
 	db.First(&record)
 
