@@ -13,7 +13,7 @@ type Mad_database struct {
 }
 
 func main() {
-	sqlConnection := "user=postgres dbname=postgres password=postgres host=jw-dashboard-pg.dcenter.d.com port=5432 sslmode=disable"
+	sqlConnection := "user=postgres dbname=postgres password=postgres host=10.43.0.157 port=5432 sslmode=disable"
 	db, err := gorm.Open("postgres", sqlConnection)
 	if err != nil {
 		panic(err)
@@ -21,15 +21,9 @@ func main() {
 
 	db.SingularTable(true)
 	
-	var record Mad_database
-	
 	var records []Mad_database
 
-	db.First(&record)
-
 	db.Table("mad_database").Select("*").Where("vendor = ?", "oracle").Scan(&records)
-
-	fmt.Printf("%d %s %s\n", record.Id, record.Vendor, record.Version)
 	
 	for i := 0; i < len(records); i++ {
 		fmt.Println(records[i])
