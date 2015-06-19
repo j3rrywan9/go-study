@@ -17,7 +17,7 @@ func Get_all_databases() []Mad_database {
 	if err != nil {
 		panic(err)
 	}
-	//db.SingularTable(true)
+	db.SingularTable(true)
 	var records []Mad_database
 	db.Table("mad_database").Select("*").Order("id").Scan(&records)
 	return records

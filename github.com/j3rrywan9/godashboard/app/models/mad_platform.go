@@ -18,6 +18,6 @@ func Get_all_platforms() []Mad_platform {
 	}
 	db.SingularTable(true)
 	var records []Mad_platform
-	db.Table("mad_platform").Select("*").Scan(&records)
+	db.Table("mad_platform").Select("*").Order("id").Scan(&records)
 	return records
 }
