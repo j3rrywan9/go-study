@@ -14,8 +14,8 @@ func (c App) Index() revel.Result {
 }
 
 func (c App) Platform() revel.Result {
-	myPlatform := models.Get_platform_name_by_id(50)
-	Id := myPlatform.Id
-	Name := myPlatform.Name
-	return c.Render(Id, Name)
+	var MyPlatform []models.Mad_platform
+	MyPlatform = models.Get_all_platforms()
+	return c.Render(MyPlatform)
 }
+

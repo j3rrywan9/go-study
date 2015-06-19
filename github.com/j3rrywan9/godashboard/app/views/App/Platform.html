@@ -1,7 +1,9 @@
 {{set . "title" "Home"}}
 {{template "header.html" .}}
 
-<h1>Platform with ID {{.Id}} is {{.Name}}</h1>
+{{range .MyPlatform}}}
+	{{.Id}} {{.Name}}</br>
+{{end}}
 
 <a href="/">Back to form</a>
 
