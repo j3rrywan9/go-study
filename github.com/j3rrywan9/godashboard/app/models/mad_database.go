@@ -19,6 +19,6 @@ func Get_all_databases() []Mad_database {
 	}
 	//db.SingularTable(true)
 	var records []Mad_database
-	db.Table("mad_database").Select("*").Scan(&records)
+	db.Table("mad_database").Select("*").Order("id").Scan(&records)
 	return records
 }

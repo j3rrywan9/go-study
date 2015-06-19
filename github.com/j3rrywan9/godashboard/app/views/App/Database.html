@@ -1,10 +1,10 @@
 {{set . "title" "Home"}}
 {{template "header.html" .}}
 
-<table>
+<table width="100%">
 	<tr><th>ID</th><th>Vendor</th><th>Version</th></tr>
 	{{range .myDatabase}}
-		<tr style="width:100%">
+		<tr align="center" style="width:100%">
 		<td width="30%">{{.Id}}</td>
 		<td width="30%">{{.Vendor}}</td>
 		<td width="40%">{{.Version}}</td>
