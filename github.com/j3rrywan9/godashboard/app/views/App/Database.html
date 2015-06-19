@@ -1,0 +1,17 @@
+{{set . "title" "Home"}}
+{{template "header.html" .}}
+
+<table>
+	<tr><th>ID</th><th>Vendor</th><th>Version</th></tr>
+	{{range .myDatabase}}
+		<tr style="width:100%">
+		<td width="30%">{{.Id}}</td>
+		<td width="30%">{{.Vendor}}</td>
+		<td width="40%">{{.Version}}</td>
+		</tr>
+	{{end}}
+</table>
+
+<a href="/">Back to form</a>
+
+{{template "footer.html" .}}
