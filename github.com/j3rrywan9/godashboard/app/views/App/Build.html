@@ -1,0 +1,19 @@
+{{set . "title" "Home"}}
+{{template "header.html" .}}
+
+<table width="100%">
+	<tr><th>ID</th><th>Build Date</th><th>Version</th><th>Git Hash</th><th>Upgrade Start Version</th></tr>
+	{{range .myBuild}}
+		<tr align="center" style="width:100%">
+		<td width="20%">{{.Id}}</td>
+		<td width="20%">{{.Build_date}}</td>
+		<td width="20%">{{.Version}}</td>
+		<td width="20%">{{.Git_hash}}</td>
+		<td width="20%">{{.Upgrade_start_version}}</td>
+		</tr>
+	{{end}}
+</table>
+
+<a href="/">Back to form</a>
+
+{{template "footer.html" .}}

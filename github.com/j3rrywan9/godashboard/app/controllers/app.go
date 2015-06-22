@@ -19,10 +19,14 @@ func (c App) Platform() revel.Result {
 	return c.Render(myPlatform)
 }
 
-
 func (c App) Database() revel.Result {
 	var myDatabase []models.Mad_database
 	myDatabase = models.Get_all_databases()
 	return c.Render(myDatabase)
 }
 
+func (c App) Build() revel.Result {
+	var myBuild []models.Mad_build
+	myBuild = models.Get_all_builds()
+	return c.Render(myBuild)
+}
