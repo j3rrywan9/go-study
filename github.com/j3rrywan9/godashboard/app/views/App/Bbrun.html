@@ -1,0 +1,22 @@
+{{set . "title" "Home"}}
+{{template "header.html" .}}
+
+<table width="100%">
+	<tr><th>ID</th><th>Git Hash</th><th>Build</th><th>Database</th><th>Platform</th><th>Jenkins Build URL</th><th>Run Type</th><th>Email</th></tr>
+	{{range .myBbrun}}
+		<tr align="center" style="width:100%">
+		<td width="10%">{{.Id}}</td>
+		<td width="10%">{{.Git_hash}}</td>
+		<td width="10%">{{.Build_id}}</td>
+		<td width="10%">{{.Database_id}}</td>
+		<td width="10%">{{.Platform_id}}</td>
+		<td width="10%">{{.Jenkins_build_url}}</td>
+		<td width="10%">{{.Run_type}}</td>
+		<td width="10%">{{.Email}}</td>
+		</tr>
+	{{end}}
+</table>
+
+<a href="/">Back to form</a>
+
+{{template "footer.html" .}}

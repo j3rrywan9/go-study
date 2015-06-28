@@ -33,6 +33,12 @@ func (c App) Build() revel.Result {
 	return c.Render(myBuild)
 }
 
+func (c App) BbRun() revel.Result {
+	var myBbrun []models.Mad_bbrun
+	myBbrun = models.Get_all_bbruns()
+	return c.Render(myBbrun)
+}
+
 type MyHtml string
 
 func (r MyHtml) Apply(req *revel.Request, resp *revel.Response) {
