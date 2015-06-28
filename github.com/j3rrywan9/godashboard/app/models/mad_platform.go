@@ -10,14 +10,8 @@ type Mad_platform struct {
 	Name string `sql:"size:50"`
 }
 
-func Get_all_platforms() []Mad_platform {
-	sqlConnection := "user=postgres dbname=postgres password=postgres host=10.43.0.157 port=5432 sslmode=disable"
-	db, err := gorm.Open("postgres", sqlConnection)
-	if err != nil {
-		panic(err)
-	}
-	db.SingularTable(true)
+func Get_all_platforms(dbConn gorm.DB) []Mad_platform {
 	var records []Mad_platform
-	db.Table("mad_platform").Select("*").Order("id").Scan(&records)
+	dbConn.Table("mad_platform").Select("*").Order("id").Scan(&records)
 	return records
 }

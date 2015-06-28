@@ -27,14 +27,8 @@ type Mad_bbrun struct {
 	Ignore_reason string `sql:"size:255"`
 }
 
-func Get_all_bbruns() []Mad_bbrun {
-	sqlConnection := "user=postgres dbname=postgres password=postgres host=10.43.0.157 port=5432 sslmode=disable"
-	db, err := gorm.Open("postgres", sqlConnection)
-	if err != nil {
-		panic(err)
-	}
-	db.SingularTable(true)
+func Get_all_bbruns(dbConn gorm.DB) []Mad_bbrun {
 	var records []Mad_bbrun
-	db.Table("mad_bbrun").Select("*").Limit(100).Order("id desc").Scan(&records)
+	dbConn.Table("mad_bbrun").Select("*").Limit(100).Order("id desc").Scan(&records)
 	return records
 }

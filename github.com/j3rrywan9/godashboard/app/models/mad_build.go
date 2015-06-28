@@ -14,14 +14,8 @@ type Mad_build struct {
 	Upgrade_start_version string `sql:"size:20"`
 }
 
-func Get_all_builds() []Mad_build {
-	sqlConnection := "user=postgres dbname=postgres password=postgres host=10.43.0.157 port=5432 sslmode=disable"
-	db, err := gorm.Open("postgres", sqlConnection)
-	if err != nil {
-		panic(err)
-	}
-	db.SingularTable(true)
+func Get_all_builds(dbConn gorm.DB) []Mad_build {
 	var records []Mad_build
-	db.Table("mad_build").Select("*").Limit(50).Scan(&records)
+	dbConn.Table("mad_build").Select("*").Limit(50).Scan(&records)
 	return records
 }

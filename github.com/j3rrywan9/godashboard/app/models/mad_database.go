@@ -11,14 +11,8 @@ type Mad_database struct {
 	Version string `sql:"size:50"`
 }
 
-func Get_all_databases() []Mad_database {
-	sqlConnection := "user=postgres dbname=postgres password=postgres host=10.43.0.157 port=5432 sslmode=disable"
-	db, err := gorm.Open("postgres", sqlConnection)
-	if err != nil {
-		panic(err)
-	}
-	db.SingularTable(true)
+func Get_all_databases(dbConn gorm.DB) []Mad_database {
 	var records []Mad_database
-	db.Table("mad_database").Select("*").Order("id").Scan(&records)
+	dbConn.Table("mad_database").Select("*").Order("id").Scan(&records)
 	return records
 }
