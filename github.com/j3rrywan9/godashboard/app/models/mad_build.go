@@ -16,6 +16,6 @@ type Mad_build struct {
 
 func Get_all_builds(dbConn gorm.DB) []Mad_build {
 	var records []Mad_build
-	dbConn.Table("mad_build").Select("*").Limit(50).Scan(&records)
+	dbConn.Table("mad_build").Select("*").Order("id desc").Scan(&records)
 	return records
 }
