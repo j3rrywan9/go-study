@@ -59,6 +59,7 @@ type Bbrun_with_version struct {
 	Run_type string
 	Version string
 	Jenkins_build_url string
+	Start_time time.Time
 	Duration string
 	Email string
 }
@@ -95,6 +96,7 @@ func (c App) BbRun() revel.Result {
 			}
 		}
 		myBbrunWithVersion[i].Jenkins_build_url = myBbrun[i].Jenkins_build_url
+		myBbrunWithVersion[i].Start_time = myBbrun[i].Start_time
 		myBbrunWithVersion[i].Duration = convertElapsedSecondsToString(int64(myBbrun[i].Time_elapsed))
 		myBbrunWithVersion[i].Email = myBbrun[i].Email
 	}
