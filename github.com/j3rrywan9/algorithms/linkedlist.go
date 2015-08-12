@@ -32,6 +32,7 @@ func (this *ListNode) PrintLinkedList() {
 	fmt.Println()
 }
 
+// LCOJ No. 206
 func (this *ListNode) ReverseLinkedList(pListNode *ListNode) *ListNode {
 	current := pListNode
 	var head *ListNode = nil
@@ -47,6 +48,7 @@ func (this *ListNode) ReverseLinkedList(pListNode *ListNode) *ListNode {
 	return head
 }
 
+// LCOJ No. 237
 func (this *ListNode) DeleteNode(pListNode *ListNode) {
 	if pListNode != nil && pListNode.next != nil {
 		pListNode.val = pListNode.next.val
@@ -57,7 +59,7 @@ func (this *ListNode) DeleteNode(pListNode *ListNode) {
 func main() {
 	mylistnode := &ListNode{1, nil}
 	mylistnode.CreateLinkedList(10)
-	mylistnode.DeleteNode(mylistnode)
+	mylistnode.DeleteNode(mylistnode.next.next)
 	mylistnode.PrintLinkedList()
 	mylistnode2 := mylistnode.ReverseLinkedList(mylistnode)
 	mylistnode2.PrintLinkedList()
