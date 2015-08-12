@@ -56,10 +56,26 @@ func (this *ListNode) DeleteNode(pListNode *ListNode) {
 	}
 }
 
+// LCOJ No. 203
+func (this *ListNode) RemoveElements(val int) {
+	if this != nil {
+		current := this
+		for current.next != nil {
+			if current.val == val {
+				current.val = current.next.val
+				current.next = current.next.next
+			}
+			current = current.next
+		}
+	}
+}
+
 func main() {
 	mylistnode := &ListNode{1, nil}
 	mylistnode.CreateLinkedList(10)
 	mylistnode.DeleteNode(mylistnode.next.next)
+	mylistnode.PrintLinkedList()
+	mylistnode.RemoveElements(5)
 	mylistnode.PrintLinkedList()
 	mylistnode2 := mylistnode.ReverseLinkedList(mylistnode)
 	mylistnode2.PrintLinkedList()
