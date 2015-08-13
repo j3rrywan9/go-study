@@ -70,13 +70,42 @@ func (this *ListNode) RemoveElements(val int) {
 	}
 }
 
+// LCOJ No. 83
+func (this *ListNode) DeleteDuplicates() {
+	if this == nil {
+		return
+	} else {
+		current := this
+		for current.next != nil {
+			if current.val == current.next.val {
+				current.next = current.next.next
+			} else {
+				current = current.next
+			}
+		}
+	}
+}
+
 func main() {
 	mylistnode := &ListNode{1, nil}
+	fmt.Println("Creating a 10-node linked list...")
 	mylistnode.CreateLinkedList(10)
+	mylistnode.PrintLinkedList()
+	fmt.Println("Deleting 3rd node from above linked list...")
 	mylistnode.DeleteNode(mylistnode.next.next)
 	mylistnode.PrintLinkedList()
+	fmt.Println("Removing the node with value equals 5 from above linked list...")
 	mylistnode.RemoveElements(5)
 	mylistnode.PrintLinkedList()
+	fmt.Println("Adding a duplicate node to above linked list...")
+	newlistnode := &ListNode{1, nil}
+	newlistnode.next = mylistnode
+	mylistnode = newlistnode
+	mylistnode.PrintLinkedList()
+	fmt.Println("Deleting duplicate nodes from above linked list...")
+	mylistnode.DeleteDuplicates()
+	mylistnode.PrintLinkedList()
+	fmt.Println("Reversing above linked list...")
 	mylistnode2 := mylistnode.ReverseLinkedList(mylistnode)
 	mylistnode2.PrintLinkedList()
 }
