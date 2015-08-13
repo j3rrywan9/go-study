@@ -86,6 +86,23 @@ func (this *ListNode) DeleteDuplicates() {
 	}
 }
 
+// LCOJ No. 19
+func (this *ListNode) RemoveNthFromEnd(n int) {
+	fast, slow := this, this
+	for i := 0; i < n; i++ {
+		fast = fast.next
+	}
+	// Nth node from end equals head node
+	if fast == nil {
+		this = this.next
+	}
+	for fast.next != nil {
+		fast = fast.next
+		slow = slow.next
+	}
+	slow.next = slow.next.next
+}
+
 func main() {
 	mylistnode := &ListNode{1, nil}
 	fmt.Println("Creating a 10-node linked list...")
@@ -104,6 +121,9 @@ func main() {
 	mylistnode.PrintLinkedList()
 	fmt.Println("Deleting duplicate nodes from above linked list...")
 	mylistnode.DeleteDuplicates()
+	mylistnode.PrintLinkedList()
+	fmt.Println("Removing 4th node from end of above linked list...")
+	mylistnode.RemoveNthFromEnd(4)
 	mylistnode.PrintLinkedList()
 	fmt.Println("Reversing above linked list...")
 	mylistnode2 := mylistnode.ReverseLinkedList(mylistnode)
