@@ -42,6 +42,10 @@ func (this *Queue) Peek() int {
 	}
 }
 
+func (this *Queue) Empty() bool {
+	return this.size == 0
+}
+
 func (this *Queue) Print() {
 	fmt.Println("stack2:", this.stack2)
 	fmt.Println("stack1:", this.stack1)
@@ -60,5 +64,6 @@ func main() {
 	fmt.Printf("%d\n", test)
 	myqueue.Pop()
 	myqueue.Print()
+	fmt.Printf("Is queue empty? %t\n", myqueue.Empty())
 }
 
