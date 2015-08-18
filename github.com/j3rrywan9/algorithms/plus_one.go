@@ -5,6 +5,7 @@ import (
 	"strconv"
 )
 
+// LCOJ No. 66
 func plusOne(digits []int) []int {
 	var num int
 	for i := 0; i < len(digits); i++ {
