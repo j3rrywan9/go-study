@@ -33,17 +33,13 @@ func (this *ListNode) PrintLinkedList() {
 }
 
 // LCOJ No. 206
-func (this *ListNode) ReverseLinkedList(pListNode *ListNode) *ListNode {
-	current := pListNode
+func (this *ListNode) ReverseLinkedList() *ListNode {
 	var head *ListNode = nil
-	for {
-		if current == nil {
-			break
-		}
-		temp := current.next
-		current.next = head
-		head = current
-		current = temp
+	for this != nil {
+		temp := this
+		this = this.next
+		temp.next = head
+		head = temp
 	}
 	return head
 }
@@ -126,7 +122,7 @@ func main() {
 	mylistnode.RemoveNthFromEnd(4)
 	mylistnode.PrintLinkedList()
 	fmt.Println("Reversing above linked list...")
-	mylistnode2 := mylistnode.ReverseLinkedList(mylistnode)
+	mylistnode2 := mylistnode.ReverseLinkedList()
 	mylistnode2.PrintLinkedList()
 }
 
