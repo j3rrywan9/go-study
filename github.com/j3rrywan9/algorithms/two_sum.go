@@ -21,6 +21,7 @@ func sliceOfKeys(m map[int]int) []int {
 	return keys
 }
 
+// LCOJ No. 1
 func twoSum(numbers []int, target int) (int, int) {
 	d := make(map[int]int)
 	for i := 0; i < len(numbers); i++ {
