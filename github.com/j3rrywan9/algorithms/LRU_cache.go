@@ -96,6 +96,7 @@ func (this *LRUCache) set(key, val int) {
 		}
 	} else { // Set the value if the key is already present 
 		this.dict[key].val = val
+		// Mark the record as recently used
 		this.moveToHead(this.dict[key])
 	}
 }
