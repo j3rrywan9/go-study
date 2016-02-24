@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/j3rrywan9/go-study/currency/google"
-	"github.com/j3rrywan9/go-study/currency/userip"
+	"github.com/j3rrywan9/go-study/concurrency/google"
+	"github.com/j3rrywan9/go-study/concurrency/userip"
 	"golang.org/x/net/context"
 )
 
