@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/jinzhu/gorm"
-	_ "github.com/lib/pq"
+	_ "github.com/jinzhu/gorm/dialects/postgres"
 )
 
 type Mad_database struct {
@@ -13,8 +13,8 @@ type Mad_database struct {
 }
 
 func main() {
-	sqlConnection := "user=postgres dbname=postgres password=postgres host=10.43.0.157 port=5432 sslmode=disable"
-	db, err := gorm.Open("postgres", sqlConnection)
+	connectionString := "user=postgres dbname=postgres password=postgres host=172.16.100.9 port=5432 sslmode=disable"
+	db, err := gorm.Open("postgres", connectionString)
 	if err != nil {
 		panic(err)
 	}
