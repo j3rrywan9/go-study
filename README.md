@@ -1,3 +1,6 @@
+# Learning Go
+
+```bash
 export GOPATH=/c/Users/jwang/go
 
 go build engine/engine.go
@@ -9,9 +12,12 @@ go install
 cd ../blackbox/
 
 go run main.go
+```
 
-Revel
-=====
+## Revel
+
+```bash
+
 go get github.com/revel/revel
 
 go get github.com/revel/cmd/revel
@@ -23,3 +29,4 @@ revel new godashboard
 mv godashboard github.com/j3rrywan9
 
 revel run github.com/j3rrywan9/godashboard
+```
