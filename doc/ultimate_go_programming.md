@@ -32,4 +32,59 @@ The semantics, though, are very, very important and powerful.
 
 #### Escape Analysis
 
+Now, as I shared before, we don't have constructors in Go.
+Yay, we don't want that, right?
+It hides cost, but what we do have is what I call factory functions.
+Factory function is a function that creates a value, initializes it for use, and returns it back to the caller.
+This is great for readability, it doesn't hide cost, we can read it, and lends to simplicity in terms of construction.
+
+The compiler is able to perform static code analysis, and in this case what the compiler will do is perform what's called escape analysis.
+And this static code analysis called escape analysis will determine whether a value gets to be placed on the stack, which is what we want, or it escapes to the heap.
+Notice that our first priority is that a value stays on the stack.
+And this is because that memory is already there.
+It's very very fast to leverage the stack.
+Also stacks are self-cleaning, which means that the garbage collector doesn't even get involved until a value escapes a stack and ends up on the heap.
+And in Go, that is what we call an allocation.
+An allocation in Go is when an escape analysis determines that a value cannot be constructed on the stack, but has to be constructed on the heap because to keep it on the stack, like in this particular case would have an integrity issue.
+And now the garbage collector has to get involved with anything that allocates to the heap.
+
+The stack can give us a tremendous amount of performance because the memory is already allocated and it's self-cleaning.
+We really want to try our best to leverage our value semantics and to keep values on the stack because again, one of the benefits of not only the isolation and the immutability and the reducing our side effects, but in many cases can also give us better performance because once something is allocated, the garbage collector has to get involved.
+Again, we gotta learn how to balance our value and our pointer semantics.
+
+It abstracts away the machine, so you don't necessarily have to care where data is, but when performance starts to matter and debugging starts to matter, it does begin to become important to understand the escape analysis and where things are.
+So let's walk through this code with the understanding of what's really happening thanks to escape analysis.
+
+Well the way escape analysis works is it doesn't care about construction.
+Construction in Go tells you nothing.
+What tells us everything is how a value is shared.
+Sharing tells us everything, and because of line 46 the sharing of the value up the call stack, that's gonna clue us in that escape analysis is not gonna construct `u` user on the stack.
+But it's going to go and construct this user value out on the heap.
+Interesting, construction is happening immediately on the heap.
+Now, what gets super interesting to me is this.
+`u` represents a value of type `user`, but it represents a value of type `user` that's not on the stack frame, but on the heap.
+And what we know is that if you want to access any sort of data that doesn't exist inside your frame, remember this is the active frame, our goroutine is operating here.
+If you want to access anything that is not on this frame, you can only do that through a pointer.
+From a syntax perspective, `u` is a value on the heap.
+You get to keep your code simple by manipulating the `u` value through your value semantics; however, underneath the covers, the compiler knows well, I've to have that escape, so even though the syntax at the coding level is a value of type `user`, we'll convert that underneath to a pointer to be able to access to the heap value.
+The syntax and the language is abstracting the details and that cognitive load from you, but it's important that you know that, but we're really working with `u` is truly a value on the heap that you get to work with as a value and not as a pointer, which historically you'd have to deal with yourself.
+
+Yay, but there's a cost to this, right?
+And that cost was an allocation.
+This value now is out on the heap, and now the garbage collector has to manage it.
+So, there's a guideline here that I want to provide because the ampersand is a very powerful readability operator, and you don't wanna walk away from it.
+So, here is a general guideline.
+I never want to use pointer semantics during construction.
+I want to use value semantics during construction.
+If you're going to assign that value that you're constructing to a variable so we can leverage the highest levels of readability in Go, we can show sharing down, we can show sharing up, you can do your own escape analysis.
+The only time I want you to use pointer semantics on construction is if you're gonna do that on a `return`.
+Okay, we're not assigning it to a variable, we're doing it on a `return`, or again, you're gonna do it inside a function call.
+We're not assigning it to a variable.
+We're doing it within the scope of a function call.
+That's where that syntax makes sense.
+But if your goal is to assign a value you're constructing to a variable, please, please use value semantic construction.
+So, we want to make sure that we're using the right semantics and semantic consistency all of the time.
+We don't want to construct values to variables using pointer semantics.
+We want to leverage the ampersand in the right place.
+
 #### Stack Growth
