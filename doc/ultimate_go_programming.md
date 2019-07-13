@@ -88,3 +88,29 @@ We don't want to construct values to variables using pointer semantics.
 We want to leverage the ampersand in the right place.
 
 #### Stack Growth
+
+The operating system stack's about 1MB, and your Go stack is 2K.
+What happens when you've got a Go routine that's making lots of function calls and eventually it runs out of stack space?
+What's going to happen?
+We can't just terminate the Go routine like we do with a thread, and we won't.
+Remember, Go is about integrity first, it's about minimizing resources second.
+We always want to try to reduce and minimize the amount of resources that we need.
+We're all on cloud computing today, shared resources are important.
+That 2K stack is a big part of that.
+But when we run out of stack space, what we need now is to get a new stack.
+This is something for me and it's very unique from a programming language, I'd never seen this before.
+Basically, imagine that we had our stack, we had some value there, and imagine we were even sharing this value as we move down the call stack.
+Eventually, we run out of stack space.
+What Go does is it has what it called contiguous stacks.
+What it's going to do is allocate a larger stack, 25% larger than the original one, and then, what it's got to do is copy all these frames back over, in this case, these pointers are relative, so they're very fast to fix.
+But basically, that Go routine, during the function call, we're going to take a little bit of this latency hit on creating the larger stack, copying those frames over, and readjusting any of these pointers.
+We do this in Go, we take this hit, one for integrity and two to minimize resources.
+I told you nothing is free.
+Integrity and minimizing resources come with a cost.
+But this isn't something that's going to happen all of the time.
+2K is usually more than enough for our stacks, because you usually don't go more than even like 10 function calls deep, you don't.
+There's other optimizations the compiler can do to keep these frames very, very small.
+This is a very good trade-off and balance.
+But this can happen.
+What this is telling us is, which is, again, really unique for me, is that values on your stack can potentially be moving around.
+This is a whole new world.
