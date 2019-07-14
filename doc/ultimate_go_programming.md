@@ -114,3 +114,23 @@ This is a very good trade-off and balance.
 But this can happen.
 What this is telling us is, which is, again, really unique for me, is that values on your stack can potentially be moving around.
 This is a whole new world.
+
+#### Garbage Collection
+
+So, the big thing about the garbage collector right now is that we call it a tri-color mark and sweep concurrent collector. 
+ne of the big things is that it's not a compacting garbage collector, memory on our heap does not move around, which is getting interesting because memory on our stacks potentially are.
+Once an allocation is made on the heap, it stays there until it gets swept away.
+But the tri-color, is a mechanism.
+We'll talk about how that is and that it runs concurrently is also very, very important.
+
+### Constants
+
+Constants are something that really have a much different feel and flavor to than your common variables.
+
+Most of the time we think about constants as being read-only variables, and it's absolutely not the case in Go.
+
+So constants are really, really powerful in Go.
+Remember now that there's two types of constants, constants of a kind and constants of a type.
+Your literal values in Go are constants of a kind, they're unnamed constants, constants of a kind can be implicitly converted by the compiler, which means that you can't really have enumerations in Go.
+You're not gonna get those compiler protections.
+Once a compiler is based on a type, then the full laws of type are gonna restrict its ability to be anything other than its particular precision. 
