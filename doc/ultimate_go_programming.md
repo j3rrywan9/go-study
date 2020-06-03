@@ -1,17 +1,94 @@
 # Ultimate Go Programming
 
+## Introduction
+
+I have taken four years of writing and thinking about Go and been able to put it together in this class.
+So in this class, what we're gonna be covering is three things.
+It's three things that I think are incredibly important to learning anything.
+History, mechanics and then design.
+So I'm gonna give you a little bit of history throughout this course about where these idioms, where these things are coming from.
+Then I'm gonna be sharing you the mechanics of how things work inside and out, and finally we get to talk about design, and how to leverage all of this information to do things in a productive and correct way.
+
+And finally of course you're gonna want that concurrency stuff, Goroutines, data races, channels, patterns, ways to think about writing multithreaded software in Go, and once all that's done and you have that strong foundation, we'll talk about testing and really cool things around how you can profile that code, but I always want us to be focusing on optimizing for correctness first.
+This is gonna be a very big theme throughout this class.
+
 ## Design Guidelines
 
+### Prepare Your Mind
+
+Now, a lot of programming languages you may have been using, your Java, your C#, your Ruby.
+Their model is based on a virtual machine but Go is based on a real machine.
+And this is a huge advantage to us because as we're gonna see we can look at code and know how it's gonna run on that machine.
+Have some indication, some expectation of this, and it's not something that we ever wanna lose again.
+
+I want you to be a champion of quality, efficiency, and simplicity.
+I'm gonna show you how the language is a champion for these things.
+How if we follow the idioms, if we follow the design guidelines, we can do this.
+
+### Productivity versus Performance
+
+Productivity has always mattered more.
+
+### Correctness versus Performance
+
+What we need to do is optimize for correctness.
+Write code that is correct.
+
+### Code Reviews
+
+And our number one priority must always be integrity. Integrity must be first.
+In fact, Go puts integrity above all else.
+It is built deep into the language.
+Now here's another buzzword, integrity.
+I mean, what does integrity mean?
+What integrity means is that we become serious about writing code that is reliable.
+
+Now, for me, integrity comes in two pieces, a micro level and a macro level.
+At the micro-level, integrity is about every read, every write, every memory allocation that we perform being accurate, consistent, and efficient.
+
+This idea that you hide complexity without losing your ability to understand the cost of your decisions.
+
 ## Language Syntax
+
+### Variables
+
+Because type provides the compiler, it provides us two pieces of critical information that's going to lend itself to integrity and readability.
+That is, the amount of memory that we need to allocate and what that memory represents.
+We need both pieces, without it the compiler cannot do its job and we cannot do our job.
+Type is life.
+```go
+var a int
+var b string
+var c float64
+var d bool
+```
+Now there's another big thing here, Go has this concept of zero value.
+It might be one of the most important concepts that Go has.
+And what zero value says is, every single variable or value we create, must be initialized.
+And if we don't specify the initialization ourselves, then it gets initialized to its zero value.
+I'm not saying default, I'm saying zero.
+What it means is the entire allocation of memory, the four bytes, the eight bytes, whatever that is, we reset every bit to zero.
+Zero value is a function of integrity, integrity first.
+We will always take a cost if it means we get integrity.
+So zero value is critical.
+
+### Struct Types
+
+Now if a struct like this is important, and we need to minimize the amount of padding possible, what we are told is always lay the fields out from highest to smallest.
+This will push any padding down to the bottom. 
 
 ### Pointers
 
 #### Pass by Value
 
-Let's start with the idea that everything in Go is pass by value.
-When I say pass by value, what I mean is wizzywig.
-What you see is what you get.
-I wanna give you an initial example of what we mean by pass by value and this idea that the wizzywig allows us to truly understand the impact that our program is having.
+Now, the one thing we have to understand about Go is everything is about pass by value.
+And pass by value for me is WYSIWYG.
+What you see is what you get, and you get integrity and readability through pass by value.
+So we're gonna see that now by just looking at some pointer mechanics to understand things.
+Now there's another thing you have to understand about pointers.
+Pointers serve one purpose and one purpose only, and that is sharing.
+If the word shared does not come out of your mouth then you do not need pointers.
+Pointers are for sharing a value across a program boundary. 
 
 Threads are our path of execution at the operating system level.
 All of the code you're writing at some point gets into machine code, and the operating system's job is to choose a path of execution, a thread to execute those instructions one after the other.
@@ -134,3 +211,40 @@ Remember now that there's two types of constants, constants of a kind and consta
 Your literal values in Go are constants of a kind, they're unnamed constants, constants of a kind can be implicitly converted by the compiler, which means that you can't really have enumerations in Go.
 You're not gonna get those compiler protections.
 Once a compiler is based on a type, then the full laws of type are gonna restrict its ability to be anything other than its particular precision. 
+
+## Data Structures
+
+### Data-Oriented Design
+
+Now, I've said a few times already in this training material that what data-oriented design is about is the understanding that every problem you solve is a data problem.
+We are all data scientists at the end of the day.
+Integrity comes from the data, our performance is going to be coming from the data, everything we do, our mental models, everything's going to be coming from the data.
+If you don't understand the data you're working with you don't understand the problem you're trying to solve, because all problems are specific and unique to the data that you are working with, and data transformations are at the heart of everything we do, every function, every method, every encapsulation is really around the data transformations that we're working on.
+
+I want to just keep reiterating this thing, that data-oriented design is about understanding the data, writing the code that we need, the algorithms that we need and eventually decoupling those algorithms that we have in the concrete to deal with the data changes.
+Everything we must do must be focused around minimizing, simplifying, and reducing the amount of code we need to solve every problem.
+
+### Arrays
+
+#### Mechanical Sympathy
+
+Also, small is fast, when we say small is fast, what we mean is, if the data you're working with is small enough to fit into the caches, and small enough to stay as close to the hardware thread as possible, you're also gonna see some better performance.
+
+Now the link list sits somewhere in between.
+We're probably getting cache line misses, because this data is not guaranteed to be on a predictable stride, but we're probably getting this data all on the same page.
+This is why, when we talk about a two meg page, if you're dealing with a system, like a database, or something that's gonna be very, very large amounts of memory in data storage, those two meg pages can come in really, really handy, because the TLB means more data on a page, and your TLB cache will be better off for it.
+So we're probably getting cache line misses on the link list, but we're not getting so many TLB misses, and we're falling somewhere in between, really interesting.
+
+#### Semantics
+
+But, the `for range` is a very special and powerful iterator in Go.
+The reason why it's so powerful is because the `for range` comes with two different semantics.
+Here we go again with semantics.
+There are value semantics and pointer semantics associated with the `for range`.
+
+### Slices
+
+#### Declare and Length and Reference Types
+
+But slices are the most important data structure in Go.
+This is something that you must learn, you must master, you can't cheat on because all of the data you'll be working with or at least the majority of it should be and probably will be stored in slices.
