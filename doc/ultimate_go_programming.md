@@ -202,15 +202,49 @@ We'll talk about how that is and that it runs concurrently is also very, very im
 
 ### Constants
 
-Constants are something that really have a much different feel and flavor to than your common variables.
+Constants have a parallel type system all to themselves.
+And the realty also is that constants only exist in compile time.
+That is really cool and much different.
 
 Most of the time we think about constants as being read-only variables, and it's absolutely not the case in Go.
 
-So constants are really, really powerful in Go.
-Remember now that there's two types of constants, constants of a kind and constants of a type.
-Your literal values in Go are constants of a kind, they're unnamed constants, constants of a kind can be implicitly converted by the compiler, which means that you can't really have enumerations in Go.
-You're not gonna get those compiler protections.
-Once a compiler is based on a type, then the full laws of type are gonna restrict its ability to be anything other than its particular precision. 
+Now what's also interesting about constants is that they can be typed, and they can be untyped.
+And when a constant is not typed, we consider it to be of a kind.
+And what's special about constants of a kind is that they can be implicitly converted by the compiler.
+```go
+const ti int =  12345
+const tf float64 = 3.141592
+```
+Now if you apply a type to a constant, like I'm doing on line 20 and 21 here, there's still constants.
+They still only exist to compile time.
+They still exist within that parallel type system, but we've handcuffed these constants.
+We've now limited them to this particular level or precision, and they can no longer be complicity converted.
+They're bound by all the laws of type.
+So constants of a kind have a lot of flexibility, as opposed to constants of a type. 
+
+### Functions
+
+What's really special about Go is that your functions can return more than one value.
+
+Now, this is really common in Go, to return both some sort of value and an error, and I want you to understand that Go doesn't have constructors.
+So, this idea of a function getting executed during construction doesn't exist.
+This is a good thing, remember we talked about in the very first lesson that readability is about not hiding the cost, and constructors are a big part of hiding the cost of things.
+And so, in Go, what we have is what I call factory functions.
+A function that is called that returns an initialized value, and without the function, that value could not have been initialized properly in any other way.
+A lot of factory functions in Go do start with the name `New`, but I would consider `retrieveUser` here a factory function as well.
+It is creating a value of type user, it's sharing it back up the call stack after it gets initialized for use.
+So, a function like this is very, very common in Go.
+
+You might see this happen a lot in Go.
+You might see a combination if statement calling a function and then checking, let's say, an error, and moving on.
+But this is something that's really unique in Go.
+Something that I think is incredibly powerful.
+Your `if` statement, your `for` statement, your `switch` statement.
+These statements, they actually come with their own block of scope, something that we don't have in other languages.
+In other words, the `u` variable that's being declared by this function call through the short variable declaration operator, this `u` variable is a unique variable to the `if` block.
+
+Go has something that's called the blank identifier.
+What this does is allows us to not declare a variable for a value when we're gonna be required to.
 
 ## Data Structures
 
@@ -246,5 +280,20 @@ There are value semantics and pointer semantics associated with the `for range`.
 
 #### Declare and Length and Reference Types
 
-But slices are the most important data structure in Go.
-This is something that you must learn, you must master, you can't cheat on because all of the data you'll be working with or at least the majority of it should be and probably will be stored in slices.
+All of those mechanical sympathy stuff, but as I told you before the array is the most important data structure there is as it relates to the hardware.
+But, in Go it is the slice.
+The slice is the most important data structure we have.
+We must have command over the slice.
+In most cases, it is the most practical and reasonable data structure that we should be using.
+I was focusing so hard on type before.
+I really want us to really understand how important the slice is.
+Now, what's brilliant about the slice is that it allows us to work with that array underneath.
+```go
+slice := make([]string, 5)
+slice[0] = "Apple"
+slice[1] = "Orange"
+slice[2] = "Banana"
+slice[3] = "Grape"
+slice[4] = "Plum"
+```
+So, our `make` function is giving us the ability to create this slice header and initialize it with a backing array all ready that is set to its zero value.
