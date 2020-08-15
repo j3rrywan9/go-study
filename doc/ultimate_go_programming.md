@@ -72,6 +72,16 @@ Zero value is a function of integrity, integrity first.
 We will always take a cost if it means we get integrity.
 So zero value is critical.
 
+This is the short variable declaration operator, `:=`.
+It is a productivity operator.
+It allows us to declare a variable and initialize it at the same time.
+At the exact same time.
+Because the language is able to look at the type of the value on the right hand side, and use that to declare the variable on the left hand side.
+When we are declaring something **not** set to its zero value, I want you to do this.
+I want you to use that short variable declaration operator.
+Declaring a variable set to its zero value, we're gonna start seeing `var`.
+You set a variable not to its zero value, we're using the short variable declaration operator.
+
 ### Struct Types
 
 Now if a struct like this is important, and we need to minimize the amount of padding possible, what we are told is always lay the fields out from highest to smallest.
@@ -296,4 +306,69 @@ slice[2] = "Banana"
 slice[3] = "Grape"
 slice[4] = "Plum"
 ```
-So, our `make` function is giving us the ability to create this slice header and initialize it with a backing array all ready that is set to its zero value.
+Here I've asked `make` to create a slice for me that has an array of five strings behind it.
+So what's going to happen is two things.
+We're going to get back this three word data structure.
+This 12 or 24 byte data structure, and this data structure's going to have three parts.
+It's three words, three parts.
+The first part is a pointer to that backing array of that string that we asked.
+Five strings, zero, one, two, three, and four.
+Now, again, this is all being set to its zero value.
+I really want you to work on these diagrams.
+I want you to have the visualization.
+You cannot look at code and understand its impact and cost and how it's going to run on the machine if you cannot visualize it.
+This stuff is really important.
+Now, the second word here is going to be the length in which our case is five.
+And the third word is something called capacity, which in this case is five.
+If you really notice, this slice is like a string with this extra word for capacity.
+So now you're already asking, "Alright, Bill, what is the difference between "length and capacity?"
+So, length is the number of elements from this pointer position that we have access to.
+Access to both read and write.
+Capacity is the total number of elements from this pointer position that exists in the backing array.
+These are two different concepts and ideas.
+We're gonna explore them more.
+Length is about what you have access to read and write.
+Capacity is about what is behind the slice in terms of the size of that data structure.
+In our case, always this array.
+Now, what's also brilliant about the slice is it has the syntactic sugar of working with an array.
+We're gonna get these array semantics but we're really working with this type of data structure right here.
+
+### Maps
+
+Remember we had arrays, we just went through slices, and now we're gonna talk about maps.
+And maps are just key value pairs.
+Remember the built-in function `make` allows us to make slices.
+Allows us to make maps.
+We're gonna see it again later when we're talking about channels.
+Now there's other interesting things about the maps and you have the ability to do literal construction.
+```go
+users := map[string]user{
+        "Roy": {"Rob", "Roy"},
+        "Ford": {"Henry", "Ford"},
+        "Mouse": {"Mickey", "Mouse"},
+        "Jackson": {"Michael", "Jackson"},
+}
+```
+
+## Decoupling
+
+### Methods
+
+```go
+type user struct {
+        name  string
+        email string
+}
+
+func (u user) notify() {
+        fmt.Printf("Sending User Email To %s<%s>\n", u.name, u.email)
+}
+
+func (u *user) changeEmail(email string) {
+        u.email = email
+}
+```
+Now, in Go, a function is called a method when that function has declared within it a receiver, and this receiver right here looks and feels like a parameter because it exactly, that is what it is.
+
+Basically what we have in Go is the ability to have both value receivers and pointer receivers.
+If you've ever heard of the `this` pointer, or the `self` pointer, in languages like in Java and C, C++, C#, then what you're really talking about are receivers, those are pointer receivers, they're named for you.
