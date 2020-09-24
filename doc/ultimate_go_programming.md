@@ -12,7 +12,7 @@ Then I'm gonna be sharing you the mechanics of how things work inside and out, a
 And finally of course you're gonna want that concurrency stuff, Goroutines, data races, channels, patterns, ways to think about writing multithreaded software in Go, and once all that's done and you have that strong foundation, we'll talk about testing and really cool things around how you can profile that code, but I always want us to be focusing on optimizing for correctness first.
 This is gonna be a very big theme throughout this class.
 
-## Design Guidelines
+## Lesson 1: Design Guidelines
 
 ### Prepare Your Mind
 
@@ -48,7 +48,7 @@ At the micro-level, integrity is about every read, every write, every memory all
 
 This idea that you hide complexity without losing your ability to understand the cost of your decisions.
 
-## Language Syntax
+## Lesson 2: Language Syntax
 
 ### Variables
 
@@ -256,7 +256,7 @@ In other words, the `u` variable that's being declared by this function call thr
 Go has something that's called the blank identifier.
 What this does is allows us to not declare a variable for a value when we're gonna be required to.
 
-## Data Structures
+## Lesson 3: Data Structures
 
 ### Data-Oriented Design
 
@@ -290,48 +290,143 @@ There are value semantics and pointer semantics associated with the `for range`.
 
 #### Declare and Length and Reference Types
 
-All of those mechanical sympathy stuff, but as I told you before the array is the most important data structure there is as it relates to the hardware.
-But, in Go it is the slice.
-The slice is the most important data structure we have.
-We must have command over the slice.
-In most cases, it is the most practical and reasonable data structure that we should be using.
-I was focusing so hard on type before.
-I really want us to really understand how important the slice is.
-Now, what's brilliant about the slice is that it allows us to work with that array underneath.
+So we just finished talking about arrays and I showed you a lot of mechanical sympathies around them and we started seeing more of the value on the pointer semantics around that.
+But slices are the most important data structure in Go.
+This is something that you must learn, you must master, you can't cheat on because all of the data you'll be working with or at least the majority of it should be and probably will be stored in slices.
+This is your go-to data structure.
+Are there times where the slice is not reasonable/practical to use?
+Absolutely, but right now until you know that it's not reasonable/practical, this is the direction.
+And a slice of values over a slice of pointers again when it is reasonable and practical.
+Let's start off with some slice code right here.
 ```go
-slice := make([]string, 5)
-slice[0] = "Apple"
-slice[1] = "Orange"
-slice[2] = "Banana"
-slice[3] = "Grape"
-slice[4] = "Plum"
+fruits := make([]string, 5)
+fruits[0] = "Apple"
+fruits[1] = "Orange"
+fruits[2] = "Banana"
+fruits[3] = "Grape"
+fruits[4] = "Plum"
+
+fmt.Println(fruits)
 ```
-Here I've asked `make` to create a slice for me that has an array of five strings behind it.
-So what's going to happen is two things.
-We're going to get back this three word data structure.
-This 12 or 24 byte data structure, and this data structure's going to have three parts.
-It's three words, three parts.
-The first part is a pointer to that backing array of that string that we asked.
-Five strings, zero, one, two, three, and four.
-Now, again, this is all being set to its zero value.
-I really want you to work on these diagrams.
-I want you to have the visualization.
-You cannot look at code and understand its impact and cost and how it's going to run on the machine if you cannot visualize it.
-This stuff is really important.
-Now, the second word here is going to be the length in which our case is five.
-And the third word is something called capacity, which in this case is five.
-If you really notice, this slice is like a string with this extra word for capacity.
-So now you're already asking, "Alright, Bill, what is the difference between "length and capacity?"
-So, length is the number of elements from this pointer position that we have access to.
-Access to both read and write.
-Capacity is the total number of elements from this pointer position that exists in the backing array.
-These are two different concepts and ideas.
-We're gonna explore them more.
-Length is about what you have access to read and write.
-Capacity is about what is behind the slice in terms of the size of that data structure.
-In our case, always this array.
-Now, what's also brilliant about the slice is it has the syntactic sugar of working with an array.
-We're gonna get these array semantics but we're really working with this type of data structure right here.
+Now notice that I'm using the `make` function.This is the built in function in Go and what it does is it allows us to create three of the reference types that are also built into the language.
+Up until now we've been using the built in types and we've been using our user defined or struct types.
+Go has another class of types called reference types.
+That is gonna be our slice, our maps, our channels, our interface values and our functions.
+They're all reference types.
+They're reference types because they are data structures that have a pointer.
+They're also reference types because when any of these types are set to their zero value, if we create a variable of a slice or a map and they're set to their zero value they're considered to be `nil` in this language.
+It's like a pointer set to its zero type is `nil`.
+A string is actually very close to being a reference type.
+The problem is that when a string is set to its zero value, it's not nil, it's empty so I can't really put it in that class.
+But we're using the built in function `make` to create this slice and we're gonna use `make` when we already know ahead of time how much memory to allocate towards its backing data structure which is an array.
+Now a slice is a three word or 24 byte data structure on our AMD64 architectures and it's very similar to the string where you get a pointer and you have the length of bytes.
+In this case not bytes though, but the length here of five which means we're gonna have five strings.
+So what we're gonna end up here now is an array of five elements, zero, one, two, three, four, and our pointer pointing to that so kinda similar to the string.
+But we end up also having a third value.
+That's why it's three words.
+This is capacity.
+And when the length is only set on the `make` call, then the capacity matches the length.
+So here's the question.
+What is the difference between length and capacity?
+Length represents the total number of elements you can access from this pointer position and I want you to know as well that the `make` call is going to set all of this here in the backing array, set to its zero value state.
+So length is the total number of elements that you can access from that pointer position.
+Capacity is the total number of elements that exist in the backing array from that pointer position.
+Capacity can be larger than length, but not the other way around.
+Your length sets the bounds just like an array has a bound that's set at compile time.
+
+And this is also really important.
+I want you to notice that we're passing a value of this slice into the print call.
+In other words the slice value just like the string is designed to be using value semantics.
+As we're gonna learn our built in, our reference types are designed around value semantics.
+They're designed to be kept on the stack.
+Notice again I've got this slice value on the frame here.
+Below us now on the frame below, the one for print line, we've got this string value and thanks to the pointer they share the backing array.
+There's efficiency in sharing and we also have consistency in copy cost.
+This array could be millions of strings, but as we pass it around the world these program boundaries the cost is always consistent.
+It's 24 bytes.
+How beautiful is this?
+The only thing that has to end up on the heap if anything and in this case right now it doesn't and the only thing that have to end up on the heap is the thing being shared, the backing array.
+This is beautiful, this is back balance and minimizing allocations and only allocating those things that need to which are the things that are gonna be shared.
+
+Now let's take a look at a slice where the capacity's larger than the length.
+Here I am again using the make call, but instead of just saying five I've said five, eight.
+What I've now said here is I want a slice whose length is five, but also has a capacity of eight.
+And what that basically means is that I'm going to have three more elements right in here, three more elements, one, two, three, five, six and seven, where we have extra capacity.
+A capacity is for growth.
+I want you to remember that.
+Length is what we have access for today and capacity is for growth so we have the ability to grow this slice beyond that length of five here efficiently up to eight elements.
+Capacity is there for growth, but efficient growth.
+
+#### Appending Slices
+
+So, there's two things that we do with slices all the time in Go code.
+We append values to them and we take slices of them, which is where the name comes from.
+Let's start with the idea of appending.
+```go
+var data []string
+data := []string{}
+```
+There's another special type in Go.
+It's called the empty struct.
+And the empty struct is declared like this.
+What's interesting about the empty struct is that it's a zero allocation type.
+I can create a million values of this empty struct, and there would be zero allocation.
+And that's because there's eight-byte value tied inside the run time, like a global variable, that this empty struct is referencing.
+It means all million empty struct values would have the same address.
+So, basically, this pointer points to the empty struct.
+That's what it does to represent empty, really cool stuff.
+
+Notice that `append`, notice the API for append, this is important to me, the API for append is really using value semantics.
+I love `append` because append is what we call a value semantic mutation API.
+Notice that `append` does mutate, but we're not using pointers, we're not sharing.
+`append` gets its own copy of the slice value, mutates it and returns it back.
+This is critical.
+`append` is able to do mutations and isolation without causing side effects because it's leveraging a value semantic mutation API.
+Plus, I told you, slices should be using value semantics.
+We'll talk more about that I promise you when we get to methods, but it's using value semantics so the APIs have to respect it.
+
+#### Taking Slices of Slices
+
+What you can do is take any existing slice value, like we have here, and create a new slice value sharing the backing array for efficiency.
+The idea again, is the only thing that has to be on the heap is the backing array.
+If anything has to be on the heap, if it has to escape, the only thing that should ever escape is the backing array, the thing being shared.
+Our slice values get to stay on our stack, so what this syntax is saying is take your slice and what we're going to do is say `[a, b]`, and what that `[a, b]` means is index `a` through index `b`, `a` through `b`.
+
+Try to avoid these, but sometimes you have to do it and that's why Go gives you the built in function `copy`, and the built-in function `copy` will let you take the source of one slice and make it the destination of the other.
+You could see here that I'm making a slice of the same length as our `slice1`.
+
+#### Slice and References
+
+I just wanna continue to iterate that when you're using pointer semantics, and we're mutating memory, we have to be aware of the side effects.
+This is what makes programming difficult.
+Functional programming says everything is value semantics, every piece of code, every function we call, operates on its own piece of data, but we don't get all the efficiencies we need to have the fastest programs that we want, and this is why GO is brilliant in giving you the responsibility of both value and pointer semantics, but we have to be aware of when we're using what, and when we're using the pointer semantics, we have to be aware of the mutations and the problems they can cause.
+
+This is a side effect, these are the nasty bugs that are so hard to find, and so anytime we're working with pointer semantics, that's great, it's gonna give us levels of efficiency, right, we have to be careful there, but we also have to make sure that we're very clean with data updates, like with slices, and that our mutations are not going to cause problems, or the mutations are happening in the wrong place.
+This is just a program to show you what a side effect really can look like in production-level code, and how careful we have to be when we're sharing these slices beyond program boundaries, especially if the call to append is going to happen.
+And one of the things I do a lot is any time I see a call to append in code, I immediately put the breaks on the code review, because append can create some of the nastiest side effects you've ever seen.
+So unless the code is decoding or unmarshalling, usually an append call is somewhat of a smell, and it's not necessarily wrong, but we're gonna have to double and triple check that we're not causing some sort of side effect with a backing array that's gonna get replaced.
+
+#### Strings and Slices
+
+Now, strings in Go are UTF-8 based. In fact, the entire language is UTF-8 based.
+If you are not saving your source code as UTF-8 you're gonna have a real problem with those literal strings and raw strings that you're storing inside your code files.
+Everything has to be UTF-8 encoding, all the way through.
+Now, what's interesting about UTF-8 is that it's a three layer character set.
+You have bytes at the very bottom, and really, we would always consider strings just to be bytes at the end of the day.
+You've got bytes at the bottom, in the middle you have what are call code points.
+And a code point is a 32-bit or 4-byte value.
+And then, after code points, you have characters.
+And the idea is that a code point is anywhere from one to four bytes.
+And then a character is anywhere from one to multiple code points.
+You have this, kind of like, n-tiered type of character set.
+
+#### Range Mechanics
+
+Again, what's beautiful about value semantics is that we're always operating on our own copy of the data.
+That tends to keep us isolated, it tends to keep us safe, it tends to allow us to do mutations that can't affect other parts of our program.
+Pointer semantics, however, means that we have shared access, which means we start mutating in the middle of an operation like this, we're going to cause ourselves pain.
+I cannot stress this enough.
+Now we still haven't learned about when to use values and when to use pointers, I've just been trying to show you that the mechanics of value pointer semantics are very, very real and they're really going to allow us to understand the behavior and the cost that our software has.
 
 ### Maps
 
@@ -349,12 +444,38 @@ users := map[string]user{
         "Jackson": {"Michael", "Jackson"},
 }
 ```
+And instead of using `make` and then the assignment operators, what I'm doing now is using that literal construction.
+Remember we saw literal construction with structs.
+We saw it with our slices, we saw it with arrays.
+Here it is again now with maps.
+So this is gonna construct that map, allow it for use, and we're inside the literal form there, doing the key value pairs again with that colon there and the closing comma.
+But notice, also, there's a built-in function called `delete`.
+And `delete` will allow you to remove a key from the map.
+Now there are restrictions on what a key can be.
+Not a value; you can store anything you want in the map, it uses the empty interface.
+But when it comes to the key, it has to be something that they can execute a hash against.
+So always think about the key as being something that you can use inside of an `if` statement.
+If you can compare the value, then you can use it as a key.
 
-## Decoupling
+## Lesson 4: Decoupling
 
-### Methods
+### Methods - Declare & Receiver Behavior
 
+But here's the problem, when the data's changing and the problem is changing, we're changing our code, what we wanna try to do is minimize, minimize the cascading changes that are gonna rip through the entire code base, and this is where the decoupling comes in.
+And so, we've been focusing down here on the concrete data.
+What we now have to start dealing with is the decoupling, and how do you decouple?
+Decoupling is gonna be a big part of what we do.
+And decoupling is all done through behavior, and we're gonna start wanting to focus on behavior now.
+Behavior is where we do design, architecture, and decoupling, and our real work, the real work we're doing is all down here in the concrete and the data.
+And one of the those we're gonna wanna learn is we wanna start from the concrete and the data and move up this way.
+Alright, so what we're gonna do is taking a look at some code here, and the code we're gonna look at is giving us the ability to allow data to have behavior.
+I want you to think about this for a second.
+To allow data to have behavior.
+Now, Go has functions, we've been looking at functions since we started, but Go also has the concept of a method, and a method is a function, a function that has what we call a *receiver*.
+So, let's take a look at what a method looks like in Go.
 ```go
+import "fmt"
+
 type user struct {
         name  string
         email string
@@ -368,7 +489,301 @@ func (u *user) changeEmail(email string) {
         u.email = email
 }
 ```
-Now, in Go, a function is called a method when that function has declared within it a receiver, and this receiver right here looks and feels like a parameter because it exactly, that is what it is.
+I always want those methods to come after the type.
+Now, this is a method because what we have is a special parameter being defined.
+It's a parameter, look at it as a parameter.
+We call this parameter a *receiver*.
+So, between the keyword `func` and the function name, we have a parameter, we call it the *receiver*, and now this is considered a method.
+And it's these methods that allow data to have behavior.
+Now, one of the things we have to learn as we continue to move forward, especially after the mechanics, is, when should a piece of data have behavior?
+I want this to be the exception, not the rule.
+And this is gonna be hard for you if you're coming from an object-oriented programming language because OOP wants you to always think about data as having the state, the data, and always having behavior.
+Object-oriented programming wants you to try to say that everything in your program should resemble some sort of object, like in the real world, that has state and behavior.
+And I don't think it's really the best way to go in Go.
+This is not what we wanna do.
+In fact, I'm gonna show you how Go is really separating state from behavior most of the time.
+And if we do this, you're going to be able to write less code and things are going to be simple.
+Functions should be your first choice until they're not reasonable or practical to do so.
+This is where we're gonna get into method.
+So, I still gotta teach you when you should take the exception and use a method.
+Data drives the semantic, so once the semantic is chosen, either everything is value or everything is pointer, and the method and the code you write has to respect the semantic for the data.
+Now, if you're used to programming languages like C++ and C# and Java, you actually deal with receivers.
+You've heard of the `this` pointer before, you've heard of the `self` pointer.
+Yeah, these are receivers, they're *pointer receivers* and they're named for you.
+One of the things that Go does, which is brilliant, is they give you the choice of value and pointer semantics, value receivers, pointer receivers, but Go also allows you to name the receiver, and we never wanna use `this` and `self` when naming the receiver.
+You want that receiver name to be short and sweet.
+It should never even be more than three letters long.
+This is at the highest level of context in your Go program.
+So, our value semantic methods, like `notify`, means that the method is operating on its own copy when we make the call.
+Our pointer semantic methods there, right?
+Right there, `changeEmail` means that we are having shared access when we make the call.
+There it is, we've got these two choices.
+Now, while we continue to learn mechanics, you're gonna see code that has got a mix of value and pointer semantics.
+Once we move to design, you will not see this anymore.
+When it comes to calling a method, Go only cares that the data, remember, data, value, pointer, that the data is of type `user`.
+It doesn't care that it's a value or a pointer of that data, all it cares is that we are working with `user` values in some form, which is brilliant because now when we make that call to `changeEmail`, what's gonna happen is Go's gonna be able to adjust to make the call.
 
-Basically what we have in Go is the ability to have both value receivers and pointer receivers.
-If you've ever heard of the `this` pointer, or the `self` pointer, in languages like in Java and C, C++, C#, then what you're really talking about are receivers, those are pointer receivers, they're named for you.
+### Methods - Value and Pointer Semantics
+
+Engineering is all about choices, it's about cost, it's about knowing when to take those exceptions.
+So these general guidelines are very, very good and they're gonna work for you most of the time and they're gonna keep you out of a lot of trouble.
+Remember, semantic consistency is everything.
+
+There are really three classes of types that we deal with, or three classes of data that we deal with that we've gotta make these decisions on.
+If you are working with the built-in types, strings, numerics, and bool, you are to be using value semantics.
+Fields in a struct, I don't wanna see pointers.
+Everything should be value based.
+Reference types, we're gonna follow the same rule.
+Value semantics for reference types, I don't wanna see you take the address of a reference type.
+There's one exception to this, however.
+A slice and a map, you may take the address of a slice or a map only if you're sharing it down the call stack and to a function that's either named `decode` or `unmarshall`.
+But not all data can leverage the value semantics, and when it comes to our struct types this is where things get interesting.
+You've got to choose, if you're defining your own struct type, what semantic is going to be in play.
+And if you're not sure what to use then we're gonna use those pointer semantics, okay?
+And then if you're absolutely sure that we can use value semantics, guess what?
+We want to use those value semantics.
+They're really our first choice.
+Pointer semantics are really the exception, when we need it.
+
+You will see this throughout the entire standard library.
+There is nothing random about code in the standard library.
+It follows these semantic rules to a `T`, and there are very, very few exceptions, there, and you can go and search for this stuff yourself.
+This is the key to having a code base that can be maintained by more than one person over time and can grow and maintain a consistency which is gonna, again, help reduce bugs and give everybody the ability to predict reasonably well how this code is gonna behave on the machine it's running on.
+
+So to sum up. Built-in types, value semantics.
+Reference types, value semantics, except for decoding and un-marshalling.
+And then our struct types we have to make a choice, if you're not sure, you use the pointer semantics first.
+I want you to remember that you can choose a semantic in the beginning, realize that you're wrong, and then just refactor that the other way.
+We are working on mostly close-based source code systems, right?
+Private source-code systems.
+Unless you're doing open source, we have the right to break APIs.
+We're gonna talk more about this during design.
+I want to break APIs when we do things that are wrong.
+If we're dealing with open source that's been versioned, then we can't break APIs, but we can always add new ones and deprecate old ones to make improvements.
+We've got to constantly be reviewing the code we're writing, adjusting the code, refactoring that code and making it better.
+So I don't wanna get hung up where we're like, stuck, because I don't know what semantic to choose.
+Choose a semantic, be consistent, and if it's the wrong one, no problem.
+We'll refactor later.
+
+### Methods - Function/Method Variables
+
+Now, one of the things I wanna make sure you understand is that methods are really made up.
+They really don't exist.
+All we have is state and all we have is functions.
+Methods give us this syntactic sugar that a piece of data has behavior.
+That's what it's there for, to give us syntactic sugar, this belief system that data has behavior, and there are times when it's very important for data to have behavior.
+Again, we've got to learn when should data have behavior and when it shouldn't, and I want data having behavior to be the exception, not the rule.
+
+All of the behavior is only still associated with data. Why is this?
+One, because these methods are not declared inside the type, like you would see in a class-based system, they're declared outside the type.
+This is Go, again, separating state from behavior.
+We're not really wanting to combine it, we're keeping it separate.
+Your syntax is also keeping it separated.
+
+Functions in Go are values, they are literally typed values, and that means that we can pass a function by its name anywhere we want in our program as long as, again, type information is the same, the function's signature.
+But here, I'm creating a variable.
+I'm creating a level of indirection, if you think about it, to be able to access and call `displayName`.
+So, there's a cost to decoupling in Go, and it's really important, we're gonna continue to say this.
+When you decouple a piece of concrete data in Go, you're going to have the cost of indirection and allocation.
+There's no way around it right now, no way around it.
+And so, we have to make sure that if we're decoupling, that the cost of indirection and allocation is worth it.
+We do not wanna blindly decouple code in Go.
+We wanna do it because it's the right thing to do, it's the right engineering choice.
+It's reasonable and practical.
+Because this cost, we know, is great.
+Remember, this is number two on our lack of performance list in our programs.
+Allocation is number two, so we don't wanna take these allocations lightly, but if the decoupling is adding value, then I'll take this cost all day long 'cause if I can make sure that I can minimize cascading changes throughout a code base, if I can make sure that I can work with different pieces of concrete data without blowing up a code base, well, I'll take the cost of allocation all day long.
+Then it's worth it.
+Alright, so our methods are giving us the ability to give a piece of data behavior.
+
+### Interfaces - Polymorphism
+
+*Polymorphism* means that you write a certain program and it behaves differently depending upon the data that it operates on.
+I wanna change that up a little bit and just say, *polymorphism* means that a piece of code changes its behavior depending on the concrete data that it is operating on.
+This is critical, I keep talking to you about, concrete data drives everything.
+Concrete data and semantics drive everything.
+And here it is, we're talking about decoupling, which is focused on behavior, because what's driving it?
+The data.
+And so when should a piece of data have behavior?
+Well, one good reason, one good practical reason is when we need to implement polymorphism and that polymorphism's gonna give us that levels of decoupling.
+So that's when a piece of data should have behavior, when we need that decoupling and we wanna be able to process all the different types of concrete data with a single piece of code.
+That's good.
+Now, there may be other times when you wanna have data have behavior, if it's an API that has to be, what I would say, stateful.
+Right, it's gotta maintain sort of state around the API.
+But we gotta be very careful about API design when we do that.
+We'll talk about those things as we go forward.
+
+Okay, so what I wanna do is give you an example of polymorphism in Go and continue to drive the idea around this idea that concrete data is driving the polymorphism because the concrete data has behavior.
+```go
+type reader interface {
+        read(b []byte) (int, error)
+}
+
+type file struct {
+        name string
+}
+
+func (file) read(b []byet) (int, error) {
+        s := "<rss><channel><title>Going Go Programming</title></channel></rss>"
+        copy(b, s)
+        return len(s), nil
+}
+```
+But interfaces are not real.
+They only define a method set of behavior.
+They define a contract of behavior.
+There's nothing real about an interface, nothing at all.
+There's an implementation detail behind `r`, but from our programming model, `r` does not exist.
+It is not real, there's nothing concrete about it.
+This is gonna be an important concept for us to follow through with as we continue to look at this code.
+And one of things you know we're looking at mechanics and we'll talk more about this.
+It's very important that your interfaces define a behavior.
+Now, Go is about convention over configuration.
+The concrete type `file` now implements the `reader` interface using value semantics.
+You see Go is about convention over configuration.
+We do not configure an interface to the concrete type like you might see in other languages.
+In other languages, you probably have to do something like this.
+This is not Go, this is configuration.
+This is going to limit us at the end of the day.
+It actually does limit us and cause our software to have more lines of code.
+Go is about less lines of code. Go is about being more productive.
+And because of the static code analysis, it's gonna give us a lot of benefits as I'm gonna show you as we move away from mechanics and into design.
+So we don't have to do this in Go.
+We just have to declare the method like we're going on line 20.
+And the compiler compile time can identify interface compliance, satisfaction.
+
+### Interfaces - Storage by Value
+
+### Embedding
+
+```go
+type user struct {
+	name string
+	email string
+}
+
+func (u *user) notify() {
+	fmt.Printf("Sending user email to %s<%s>\n", u.name, u.email)
+}
+
+type admin struct {
+	user  // Embedded type
+	level string
+}
+```
+We are embedding a `user` value inside of the `admin` value, but, for me, a little bit better way of thinking about this is to create this inner type and outer type relationship.
+I want you to look at `user` as the inner type, and `admin` as the outer type, and when you do what we have is this concept of *inner type promotion*.
+Everything related to the inner type can be promoted up to the outer type.
+In other words, promotion allows access to those things from the inner type through the outer type.
+So look, let's do our construction like we did before.
+Construction's very tedious in Go.
+Types have to be very explicit, but you can see here that the `user` type looks and feels like a field during construction.
+It's really not a field.
+We're just trying to access the `user` value that we've embedded directly, but we do it through the type's name.
+And so, now what we're doing is initializing the inner value directly, but here's where inner type promotion really comes in.
+We can still access the notified behavior through the inner type value directly, but because of inner type promotion, I can also access notify directly through the outer type value.
+Look, it's the same exact output for both calls.
+Inner type promotion is giving us a sense of type reuse, but we're gonna use it for much more than that.
+I now have two implementations of the `notifier` interface, of the method `notify`.
+One from the inner type, one from the outer type.
+But when the outer type implements the same things as the inner type, then there is no promotion.
+The outer type will override the inner type's implementation, now if you look at this.
+Now when we call our polymorphic function with the address to the outer type, it is the outer type's implementation that gets called.
+Same thing when we call notify against the outer type's value, but in this particular case, we can always still access the inner type's behavior through the inner type value directly like we just did there. It's all there, so when I said that inner type promotion can, I meant can, because only a compile time does the compiler really check, and only a compile time do those things that are being accessed promote up.
+
+### Exporting
+
+The last mechanic we need to learn before we can get into design here is exporting.
+Exporting is kind of like the encapsulation piece of Go.
+But it's not like your object-oriented programming languages around private and public.
+It is a little bit different.
+The basic unit of compilation in Go is a package.
+A package in Go represents a folder.
+I really wanna go deep into this later.
+But encapsulation begins and ends really at the folder level.
+Every folder represents a static library.
+That is our smallest unit of compilation.
+This folder also should represent the namespace for everything that's inside this folder or this package.
+I also wanna see one file named after the package name; that's gonna help.
+We'll talk more about that later.
+Based on this basic unit of compilation, the idea is that symbols are either exported or available outside of the code in this folder, or un-exported and only available to the code in this folder or package.
+Up until now, I've been very careful to try to keep everything lowercase because Go is all about convention over configuration.
+This is one of the more brilliant conventions that Go has.
+Notice that the folder name is `counters`.
+Notice that the package directive name is `counters`.
+You really wanna match the folder name with the package name because we import packages by their folder name, and if these two names don't match, you're gonna really confuse somebody because this is the namespace and that's the folder, and we expect these things to match.
+All code inside this folder has to use the same package directive or the compiler's going to get upset.
+What Go says is you just look at the first letter of anything that's been named, any identifier, and if it's starting with a capital letter, guess what?
+It's exported;
+it's available outside of this folder or this package.
+If it's lowercase, it's unavailable or un-exported.
+But I want you to understand it's really not private and public.
+Private and public is about the data.
+This is about the identifier.
+
+## Lesson 5: Composition
+
+### Grouping Types
+
+We're going to start talking about some design related material now, and this is going to be around composition.
+There's a lot of things to talk about around composition, and composition is something that you're really going to be focused on quite a bit as a Go developer, even much more than all of the concurrency multithreaded stuff.
+What we want to start off with here is the concept of grouping, because grouping is going to be one of these things where I've really got to kind of break you down and build you back up.
+Things are going to be a little different here in Go.
+We can group everything by what we do.
+Now, I also, at this point, I also want to be able to start reading code and identify smells.
+This is very important.
+When we see smells in code, it becomes also critical for our ability to be able to talk about, verbalize, explain, have the right language to help people understand what the smells are and how to fix it.
+There's a lot of smells in this code as well when I go through it.
+Look, just alone, when I see that `Animal` type right there, when I see that `Animal` type, I notice that this is really a generic type just being placed in the code for reusable state.
+I'm really always concerned about that.
+The bigger smell, too, is that I've defined a type called `Animal`, and yet we're not really using it.
+I do not need a value of type `Animal` in this program in order for the program to be able to work.
+I could get rid of `Animal`, embed those fields in `Cat` and `Dog`, and I wouldn't have to break a single method or function.
+That, again, is a smell.
+I only want types where we need values of that type.
+I want to be very, very clear that to define a type, literally for reusable state, is a smell, there are exceptions to every rule.
+But because we don't need an `Animal`, guess what?
+We don't need the type.
+From my perspective, it's type pollution.
+Believe it or not, a little copying and pasting can go a very long way.
+We've been taught these concepts of DRY, Do not Repeat Yourself.
+But I think the cost of Do not Repeat Yourself in Go is worse than maybe some of these other languages you've worked on.
+Coupling is always going to be a bigger cost than a little duplication.
+We'll continue to see that as we move on.
+Also, when we look at the `Speak` implementation for `Animal`, it is completely useless.
+There's no value in it.
+Think about what we've done.
+I've added a type, I've added a method called `Speak`, these things need tests, which can't really be accurate.
+They're not used.
+This is code that we have to, now, increase our lines of code, increase our bug potential, increase our test cases, and it adds zero value to the software.
+We really, really, really don't want to be polluting software like that.
+I understand where this developer's coming from with the idea of grouping things by animal and creating this reasonable state.
+But this is not how, at least, I want you to design and architect and write code in the future.
+Then, how do we correct this program?
+What are we going to tell this developer?
+Well, simply what I'm going to tell the developer is, stop thinking about who you are.
+Stop thinking about what cats and dogs are and start focusing on what cats and dogs do.
+This is what's important, what cats and dogs do.
+It's convention over configuration.
+Let's do this instead.
+Let's remove the `Animal` type, it is pure pollution as far as I'm concerned.
+Let's just bring in an interface, the `Speaker` interface, that behavior.
+Remember, interfaces should define behavior, not persons, places, and things.
+I want the `Speaker` interface.
+If I saw an `Animal` interface here, I'd be very, very sad.
+That's not it.
+Let's keep the concrete types as those persons, places, and things, and let's have the interface describe the behavior.
+That's the convention we're looking for.
+OK, so we've got the `Speaker` interface, one active behavior, `Speak`.
+Then when what I'm going to do is a little copy and paste.
+Yes, I'm going to copy those common fields into `Dog` and `Cat`.
+
+### Decoupling - Part 1
+
+A lot of you have been taught, to start with the interface, start with the behavior, try to figure out what those contracts are.
+I don't want you to do that.
+That is guessing.
+I don't want you to do that.
+Remember, the problem is solved in the concrete, not in the abstract.
+So we need a concrete influenced, implementation solution first, in order to know how to decouple.
+This is going to simplify your code, and allow you to focus on what's important, which is the problem, and remember, the problem is the data.
