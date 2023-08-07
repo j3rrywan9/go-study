@@ -619,3 +619,133 @@ We have the idea of zero value in Go, and I wanna use the keyword `var` for that
 All memory's initialized at least to a zero value state.
 We can use the short variable declaration operator when we are initializing something to it other than a zero value state.
 There is exceptions to everything, and part of engineering is knowing when to take that exception, but these are the guidelines we're gonna be following, and we have conversion over casting, again, it's an integrity play to keep our software, again, and our data and our memory safe.
+
+## Lesson 4: Decoupling
+
+You are not allowed to start here, I really need you to have looked at those first three lessons before we get here, because everything happens in the concrete, and that's what decoupling is about, decoupling the concrete.
+So to appreciate decoupling mechanics and semantics, we've gotta know and learn our concrete.
+So in this section, we're gonna learn how we can create thin layers of decoupling that are precise.
+We're also gonna learn the cost and the impact that decoupling has on your Go programs, because what I want is to minimize pollution and be able to maximize the advantages that decoupling gives us in our software, both in terms of design and architecture, and include the cost of what decoupling brings.
+We wanna minimize these things, and we're gonna learn those things in this section.
+
+### 4.1 Methods - Part 1 (Declare & Receiver Behavior)
+
+We're about to shift gears now and we're gonna start talking about methods, but we're really gonna start talking about is decoupling.
+Up until now, throughout the video, we've been really talking about the concrete, concrete data, and I've been trying to stress to you that everything we do is really built in and around the concrete data.
+The problems you solve are based on the concrete data.
+If you do not understand the data, you do not understand the problem.
+If you don't understand the problem, you can't write code, right?
+And if the problem is changing, that means the data is changing.
+The problem is changing, your code's gonna have to change.
+Our work, our daily lives are built in and around data.
+Remember, we're all data scientists.
+And what we also been trying to show is that your performance comes from the data.
+Your performance comes from everything we're doing with data, and again, latency on network disk I/O and latencies on memory.
+Latencies on how we access data on the machine, all of it's data, data, data, data, data.
+But here's the problem, when the data's changing and the problem is changing, we're changing our code, what we wanna try to do is minimize, minimize the cascading changes that are gonna rip through the entire code base, and this is where the decoupling comes in.
+And so, we've been focusing down here on the concrete data.
+What we now have to start dealing with is the decoupling, and how do you decouple?
+Decoupling is gonna be a big part of what we do.
+And decoupling is all done through behavior, and we're gonna start wanting to focus on behavior now.
+Behavior is where we do design, architecture, and decoupling, and our real work, the real work, the real work we're doing is all down here in the concrete and the data.
+And one of the those we're gonna wanna learn is we wanna start from the concrete and the data and move up this way.
+I don't ever, I really, really, really don't want you to work in this direction.
+Too many developers are doing this.
+They're starting with the behavior, they're starting with the decoupling, they're thinking about these, and you're guessing.
+If you start up here, you are guessing.
+I wanna take the guesswork out.
+Solve the problem first in the concrete, then work towards decoupling.
+I'm gonna show you this more anyway as we start getting into the design sections of this class, but right now I still have to teach you mechanics.
+Gonna teach you the mechanics of what's happening above this line so we can get into design and architecture.
+
+Alright, so what we're gonna do is take a look at some code here, and the code we're gonna look at is giving us the ability to allow data to have behavior.
+I want you to think about this for a second.
+To allow data to have behavior.
+Now, Go has functions, we've been looking at functions since we started, but Go also has the concept of a method, and a method is a function, a function that has what we call a receiver.
+So, let's take a look at what a method looks like in Go.
+Here's our user-defined type, it's `user`.
+It's got a `name` and an `email`, and if I scroll up just a little bit above the type, you see two methods.
+I always want those methods to come after the type.
+Now, this is a method because what we have is a special parameter being defined.
+It's a parameter, look at it as a parameter.
+We call this parameter a receiver.
+So, between the keyword `func` and the function name, we have a parameter, we call it the receiver, and now this is considered a method.
+And it's these methods that allow data to have behavior.
+Now, one of the things we have to learn as we continue to move forward, especially after the mechanics, is, when should a piece of data have behavior?
+I want this to be the exception, not the rule.
+And this is gonna be hard for you if you're coming from an object-oriented programming language because OOP wants you to always think about data as having the state, the data, and always having behavior.
+Object-oriented programming wants you to try to say that everything in your program should resemble some sort of object, like in the real world, that has state and behavior.
+And I don't think it's really the best way to go in Go.
+This is not what we wanna do.
+In fact, I'm gonna show you how Go is really separating state from behavior most of the time.
+And if we do this, you're going to be able to write less code and things are going to be simple.
+Functions should be your first choice until they're not reasonable or practical to do so.
+This is where we're gonna get into method.
+So, I still gotta teach you when you should take the exception and use a method.
+Really, the question is, when should a piece of data have behavior?
+But let's start with some of the mechanics here.
+Now, Go is interesting.
+We've been talking about our value and our pointer semantics, and normally, value and pointer semantics don't hit Go developers in the face until we get to methods because now as we get into methods, you have to make a choice.
+Should I be using a value receiver?
+If you notice this, we have two receiver types that we can choose.
+Should I be using a value receiver or should I be using a pointer receiver?
+This is very interesting, and a lot of Go developers get stuck and they don't know what to do.
+And too many Go developers, especially early on, start doing this.
+Okay, I know.
+If the method I am writing has to mutate the data, I'll use a pointer receiver.
+I'll share the data in.
+But if the method doesn't have to mutate, I'll use a value receiver.
+I'll let it just have a copy.
+This is very, very, very bad, we cannot do this.
+I'm not gonna be able to stress enough that we must be consistent with our semantics.
+Data drives the semantic, so once the semantic is chosen, either everything is value or everything is pointer, and the method and the code you write has to respect the semantic for the data.
+Now, if you're used to programming languages like C++ and C# and Java, you actually deal with receivers.
+You've heard of the `this` pointer before, you've heard of the `self` pointer.
+Yeah, these are receivers, they're pointer receivers and they're named for you.
+One of the things that Go does, which is brilliant, is they give you the choice of value and pointer semantics, value receivers, pointer receivers, but Go also allows you to name the receiver, and we never wanna use `this` and `self` when naming the receiver.
+You want that receiver name to be short and sweet.
+It should never even be more than three letters long.
+This is at the highest level of context in your Go program.
+So, you can see, I'm using `u` for `user`, `u` for the `*user`, any time we're using a `user` here, regardless of the semantic.
+Okay, great.
+So, our value semantic methods, like `notify()`, means that the method is operating on its own copy when we make the call.
+Our pointer semantic methods there, right?
+Right there, `changeEmail()` means that we are having shared access when we make the call.
+There it is, we've got these two choices.
+Now, while we continue to learn mechanics, you're gonna see code that has got a mix of value and pointer semantics.
+Once we move to design, you will not see this anymore.
+No more, no, no, no, no.
+But I'm teaching mechanics, so I need both sides of this so I can show you the behavior.
+Remember, mechanics, the semantics teach us the behavior, now we can understand how this code's going to perform.
+Alright, great, so if I move into `main()`, I wanna show you a few things.
+On line 32, I'm constructing a value of type Bill.
+A value of type Bill, there it is right there, named Bill.
+Let me clear this up a little bit so we can take a look at and visualize what's going to be happening in this code right here.
+I'm going to be constructing a value of type `user` on line 32.
+We know `bill` is a value of type `user`.
+Now, notice the call on line 33 to `changeEmail()`.
+`changeEmail()` was using our pointer semantics, changeEmail said, hey, hey, hey, you've gotta share a value with me.
+Now, you might think, well, why would that compile?
+Because `bill` is not a pointer to a `user`, it is a value to a `user`.
+This is interesting.
+When it comes to calling a method, Go only cares that the data, remember, data, value, pointer, that the data is of type `user`.
+It doesn't care that it's a value or a pointer of that data, all it cares is that we are working with `user` values in some form, which is brilliant because now when we make that call to `changeEmail()`, what's gonna happen is Go's gonna be able to adjust to make the call.
+It's going to take the address of `bill`, satisfy the receiver type, and share `bill` with `changeEmail()` because `changeEmail()`'s saying, I wanna use pointer semantics.
+When we call line 34, `notify()`, which is using our value semantics, no big deal, `bill` is already a value and `notify()` will operate on its own copy.
+Value semantics means we're operating on our own copy, pointer semantics, shared access.
+Now, on line 38, I'm doing something I told you I don't want to do.
+Any time I am constructing a value to a variable, I do not wanna use this syntax.
+I don't wanna start my life out as a pointer.
+Don't use those pointer semantics on construction if we're going to assign to a variable.
+That being said, I wanted to show you something with the pointer.
+Notice again, `changeEmail()`'s already using pointer semantics, no big deal, `joan` is a pointer, yada yada yada, but on `notify()`, `notify()` says, I want my own copy of the value.
+Go, again, is gonna come in and say, no problem, I will take the value that the pointer points to for you and I will satisfy the call.
+Now, what you're seeing me do on the board might be interesting because Go is adjusting to make the call, but now what we're doing is switching semantics in the code.
+And I've tried to tell you over and over again, you start switching semantics, life is going to be very, very bad.
+And in fact, this call on line 40 is the worst of them all.
+You're really not allowed to take a copy of a value that a pointer points to.
+Not all data can be copied, and if it's shared with you, you should pretty much assume that it's not copy.
+So, if I ever saw code like on line 40, that would really scare me.
+We wanna really maintain our value semantics.
+We'll continue to talk about that, but I wanna show you here how Go's able to adjust to make the call to match the receiver type with the data that's there.
+Okay, so what I wanna do next, now, is really try to give you some guidelines around when we should be using value semantics and when we should be using pointer semantics so we can come back into this code in a bit and get a better understanding of what we're doing in this code block and why.
