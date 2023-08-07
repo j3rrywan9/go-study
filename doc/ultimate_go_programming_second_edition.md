@@ -1273,3 +1273,128 @@ It's really showing you when a piece of data should have behavior.
 This is one of those cases when we need to implement polymorphism.
 I cannot stress enough though there is a cost to decoupling here.
 And again, it's the indirection and the allocation.
+
+### 4.2 Interfaces - Part 2 (Method Sets and Address of Value)
+
+Alright, let's look at another polymorphic example here, and things are going to get a little more complicated, but that's okay, we're going to build up to this.
+Now I've got another interface here called `Notifier`, one active behavior, `notify()`.
+Again, I want that relationship of behavior.
+Interfaces should describe behavior, not persons, places, and things.
+And here it is, in `Notifier`, `notify()`.
+We've got this one active behavior, there we are.
+Now here's my concrete data, it's named `user`, `name` and `email`, and here we are, line 22, and remember what I can say, the concrete data `user` now implements the `Notifier` interface using pointer semantics.
+We were using value semantics before, now we're using pointer semantics.
+All I had to do was implement the `notify()` method based on the fact that that is the full method set now for `Notifier`.
+I can say it again, the concrete type `user` now implements the `Notifier` interface using pointer semantics.
+Now I go ahead and I look down here, and we have, again, our polymorphic function.
+What is this function saying again?
+It's saying, I will accept any piece of concrete data, any value, any pointer, that implements the `Notifier` interface.
+It can't be asking for Notifier values, cause they don't exist, that's an interface type.
+The interface types are valueless.
+Pass me any concrete piece of data, any value, any pointer, that implements, that has the full method set of behavior for `Notifier`.
+And then we will call into that behavior from a decoupled state through the interface value.
+Brilliant, so let's go through this program now.
+So I go ahead, on line 31, and I construct my user value, there it is, user right there, and we put "Bill" in it.
+There it is, there's my concrete data.
+Now just like we did before, on line 36, I call my polymorphic function using value semantics, just like we did before, which means we want to pass a copy of "Bill" across this program boundary.
+But something very odd happens.
+When I try to run this program, the compiler very quickly says, whoa, whoa, whoa, whoa, whoa!
+Look, I'm sorry, but this piece of data you're trying to pass across this program boundary, it doesn't have the behavior that it needs, it doesn't have `notify()` behavior.
+And we're like, what?
+What you talking about, compiler?
+I did everything you asked me to do.
+I went ahead, and I defined a method, named `notify()`, and `notify()` matches the `notify()` method inside the interface.
+I have compliance, there it is!
+I've got a method right there named `notify()` for the concrete type `user` that implements the `Notifier` interface using pointer semantics.
+Compiler, it's all there, why are you not letting me pass this value through?
+Why does this piece of data not implement the `Notifier` interface?
+Well, the compiler's absolutely right.
+And what the compiler's trying to do here, I call it love.
+You see, the compiler loves you, and the compiler doesn't want you to have an integrity issue in your software.
+And if the compiler allowed you to use value semantics here, we would be in a tremendous amount of trouble.
+Now I want to explain to you and show you where this integrity issue is, there's really two parts to it.
+But before I can, we've got to talk about method sets.
+There's a set of rules in the specification around method sets.
+And these method sets are there to protect us and our software
+Now I'm going to write the rules for method sets as it relates to the specification, and then I'm going to switch it up just a little bit to make it a little easier for you to read and understand and then understand where the integrity issues are with line 36.
+But this is all love, I don't want you to look at it any other way.
+This is the compiler showing you love.
+Okay, here we go.
+This is what the compiler says.
+It says, if you're working with a value of type `T`, right, if we're working with our value semantics here, working with a value of type `T`, then what it's saying here is only those methods using value receivers, right, only those methods using value semantics, belong to the method set for this value, that's it.
+And if you're working with pointers, right, we've got pointer semantics here, then what it's saying, your pointer receiver methods, and your value receiver methods, what it's saying is all the methods that you declare for that concrete type, they exist for pointers.
+You get the full method declarations for your pointer data, but only your value methods for your value data.
+In other words, these pointer receiver methods are left out of the method set for values.
+
+||||
+|---|---|---|
+| T | | Value Receiver |
+| *T | Pointer Receiver | Value Receiver |
+
+And if we just quickly go back and look at what's happening here, notice that I implemented the `Notifier` interface using pointer semantics.
+Pointer semantics, and now I'm trying to use value semantics.
+I'm mixing semantics, am I not, and the compiler's going, whoa, you're trying to create a copy of `T`, but guess what, `T` doesn't have any methods.
+Compiler was right, because the pointer receiver method didn't get included in the method set.
+The real question again now is why?
+Why can't we include pointer receiver methods for this value of `T`, but we can for pointers, and why do value receivers get to apply to both?
+Okay, so the two integrity pieces here, one I would call minor, one I would call major.
+Let's look at the minor integrity issue.
+Now what if I said to you that not every value you work with has an address?
+Think about this for a second.
+What if I told you that you could not take the address of `T`?
+Well, think about it, if you can't take the address of `T`, you can't call a pointer receiver method, you cannot be using pointer semantics if something can't be shared.
+Remember, integrity is about a hundred percent.
+If you can't have something a hundred percent of the time, you cannot have it, you're setting yourself up for integrity issue.
+Look at this piece of code right here.
+I define a type named `duration` based on an integer.
+`duration` is based on an `int`.
+And then I implement the `Notifier` interface using pointer semantics, I have a method using pointer semantics named `notify()`.
+But look at what I do on line 18.
+On line 18, I go ahead and I take the literal value 42, which we know is a constant of kind int, convert it to a value of type `duration`, and try to call `notify()`.
+But the compiler says, dude, I'm sorry, this value has no address.
+And the compiler's right, because still at the end of the day, this is a constant.
+It's a constant of type `duration`, and we know constants only exist to compile time.
+They never find themselves on a stack or on the heap.
+There is no address, even though it does satisfy the interface, there is no address.
+So this would be very bad to store this duration inside of our interface because there's no address, and therefore the pointer receivers can't be applied.
+Look, we're getting at least compiler messages here.
+This is a minor one for me.
+This isn't the big one, this isn't the one that's like hugs and love here.
+But I want you to understand that if you can't have something a hundred percent of the time, you can't have it at all.
+So we can't assume that we can always get the address of `T`.
+But if you already have an address to `T`, then we already know it's in memory, so we can always use the address, or we can always get a copy of the value that the pointer points to.
+You can always do this, but you can't assume the address.
+But what's the bigger play here?
+Why are these rules really in place?
+And remember, this stuff has been known for a decade.
+Well, let's look at this a little differently.
+When we talk about decoupling, I really want to focus on the behavior side, not necessarily on the data side.
+And when we do that, something very interesting happens.
+If we read this chart from right to left, read it in this direction, focus on the behavior, something really, really interesting happens.
+And what this chart is saying is the following: If you've chosen pointer semantics, right, if you've chosen your pointer semantics, and want you to remember something, we define the type, we choose the semantics, and then we implement.
+So if the pointer semantics were the choice, then what this chart is saying is, you can only share.
+If you've chosen pointer semantics, then the only thing you're allowed to do is share, because that is the only safe thing to do.
+If you choose value semantics, then we want you to make copies.
+But I told you one thing.
+I said to you that sometimes it is absolutely safe to share a value even if you're working in value semantics.
+I don't really want to change semantics if I don't have to, but even if you're using value semantics, there are times where it's safe to share.
+But what this chart is also saying is, it is never safe, it's never safe to make a copy of a value that a pointer points to.
+It's never safe.
+So if you're in pointer semantic mode, you're only allowed to share, you're never allowed to make a copy of the value that the pointer points to.
+How amazing is this chart?
+When we look at it from the behavior point of view, it all begins to make sense.
+The compiler's saying, if you chose pointer semantics, you're only allowed to share.
+If you change your semantic back to value, that is a major, major violation of law.
+If you're using value semantics, please, let's make copies of things, let's give the interface its own copy.
+But there are times where you might need to share something, like decoupling, like unmarshalling.
+But we never, ever, never, ever want to go from pointer semantics to value semantics.
+Never, ever, ever, it's a major violation, and what the compiler has done here is said, when we're storing data inside of an interface, we're never going to allow ourselves to break this major law of pointer semantics to value semantics, no, no, no, no, we're never allowed to make a copy of the pointer the pointer points to, you cannot assume that that is safe.
+So when we come back and look at this code now, what we realize is we implemented the interface using pointer semantics, which now means that we can only share data with the interface.
+We're no longer allowed to make copies of the data, which is what I was trying to do.
+So if I turn around and now say, okay, let's maintain the right law here, since we're using pointer semantics to implement the interface, I can only share the data with the interface.
+Boom, there it works.
+How cool is this?
+So this chart again is here to protect us, to maintain the right level of integrity when we're dealing with decoupling.
+So if you are using pointer semantics, which was chosen at the time you defined the type, those methods were declared based on the type, then you can only share data.
+If you're using value semantics, let's make copies, but you also have the ability to share when it is important.
+This is never allowed, never allowed, using pointer semantics, you may not make copies of the value that the pointer points to.
