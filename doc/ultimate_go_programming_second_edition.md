@@ -1398,3 +1398,66 @@ So this chart again is here to protect us, to maintain the right level of integr
 So if you are using pointer semantics, which was chosen at the time you defined the type, those methods were declared based on the type, then you can only share data.
 If you're using value semantics, let's make copies, but you also have the ability to share when it is important.
 This is never allowed, never allowed, using pointer semantics, you may not make copies of the value that the pointer points to.
+
+### 4.2 Interfaces - Part 3 (Storage by Value)
+
+So I wanna show you one more time how the semantics really drive our ability to read and understand the impact code's gonna have.
+And that when we are decoupling in Go, it's gonna come with the cost of indirection and allocation.
+And this is not unique to Go, by the way.
+I mean, decoupling is just inherently an allocation type of operation.
+But let's take a look at this code here.
+We can really see this and again, begin to understand that when we understand our mechanics, and then we understand our semantics, we understand how code's gonna behave, and the impact, we can make some better engineering choices.
+Here is the `printer` interface when active behavior `print()`.
+And here's our concrete type `user`.
+It has a `name` and it implements the `printer` interface using value semantics.
+And what do we now know when we're implementing interfaces with value semantics?
+We can both use value semantics and pointer semantics, but we prefer to use the value semantics and keep our semantics clean.
+Okay, here we go, value semantics is at play with this concrete data user.
+Now I go ahead and I create a `user` value, there it is, there is `u`, I put "Bill" in it, beautiful, there's my concrete data, that's our work.
+And then on line 32, I do something really interesting.
+I create a slice, a collection, of `printer` interface values.
+I now have a collection of data that is not bound to just one concrete type, but any concrete data, any value or any pointer that implements the `printer` interface, the behavior of `print()`.
+And I'm using my slice literal here to do construction.
+And on line 35, I use my value semantics to store the first piece of concrete data.
+So this will say `user` and this will have its own copy of `u`.
+Value semantics are at play, which now means what?
+It means that since we're using value semantics, what do we have here?
+Allocation, there it is, we have a copy.
+There's our allocation.
+And then on line 38, what have we done?
+We're now not using value semantics, we're using pointer semantics on line 38.
+That means the interface is gonna look like this, a `*user`, it means that it's referencing the original `u`, pointer semantics, value semantics, again, because anytime we store a value inside of the interface, we're gonna have allocation.
+Guess what?
+Allocation, right there.
+There's our cost, indirection and allocation, boom, there it is.
+But when I go ahead on line 42, and I change out our data, only index one, not index zero will see the change, because index zero is using value semantics, index one is using pointer semantics, we can see and understand the impact that we're having.
+Now on line 46, we're using the value semantic form of the `for range`.
+This is not an accident, this is not random.
+Think about it.
+We are gonna range over a collection of interface values.
+Interfaces are reference types.
+Reference types use value semantics.
+Guess what form of the `for range` we use.
+Value semantics.
+Do you see how everything is driven off of the data, and the data semantic?
+What is the collection?
+Interfaces.
+Interfaces, value semantics, value semantics, there we go, right there, `for _, e`.
+Now `e` then is an interface value, as well, local to the `for` loop.
+On the first iteration, what do we get?
+A copy of index zero, we're using those value semantics, which now means, this is `e`, which now means I have two interface values sharing, pointers are for sharing, efficiency, I'm hoping by now you see the efficiencies that we're getting through our pointers.
+But we made a copy, value semantics, I've got two interface values, now it's sharing the same user value.
+And then we call `print()`, right?
+We call `print()` against our copy, which is gonna call `print()` against there, right there.
+We call `print()` against `e`, which calls `print()` against our copy.
+Now on the next iteration, what happens?
+We get a copy of the next interface value.
+So we're not gonna be pointing here anymore.
+This is now gonna say `*user`, we're gonna come here, and now when we call `print()` against the same `e`, polymorphism, the behavior changes depending upon the concrete data that we're operating on, we now call `print()` against this, right here, against the original.
+And we see the change.
+Polymorphism, again, is all about decoupling through behavior.
+But everything's still being driven through the concrete, and the concrete data having the behavior.
+Polymorphism means that a piece of code changes its behavior depending upon the concrete data it's operating on.
+And right here, we were operating on two different `user` values, one in value semantic mode, one in pointer semantic mode, and we see different behavior.
+This is really important.
+And if we maintain these semantics and these semantic consistencies throughout our code base, life is just going to be better for us and everybody on the team and everybody that we haven't even met yet that eventually has to come in and maintain this code.
