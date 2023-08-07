@@ -979,3 +979,297 @@ We've got to constantly be reviewing the code we're writing, adjusting the code,
 So I don't wanna get hung up where we're like, stuck, because I don't know what semantic to choose.
 Choose a semantic, be consistent, and if it's the wrong one, no problem.
 We'll refactor later.
+
+### 4.1 Methods - Part 3 (Function / Method Variables)
+
+### 4.2 Interfaces - Part 1 (Polymorphism)
+
+So we just finished the topic on methods, which teaches us how to or the mechanics behind how you add behavior to data.
+And I told you that I want this to be the exception, not the rule.
+But I want to start showing you now the mechanics, and we'll look at some of the semantics, of interfaces, okay.
+And interfaces give us the ability to have polymorphism.
+And there's a saying or a quote from the inventor of BASIC, Tom Kurtz.
+And he describes what polymorphism is perfectly.
+Polymorphism means that you write a certain program and it behaves differently depending upon the data that it operates on.
+I wanna change that up a little bit and just say, polymorphism means that a piece of code changes its behavior depending on the concrete data that it is operating on.
+This is critical, I keep talking to you about, concrete data drives everything.
+Concrete data and semantics drive everything.
+And here it is, we're talking about decoupling, which is focused on behavior, because what's driving it?
+The data.
+And so when should a piece of data have behavior?
+Well, one good reason, one good practical reason is when we need to implement polymorphism and that polymorphism's gonna give us that levels of decoupling.
+So that's when a piece of data should have behavior, when we need that decoupling and we wanna be able to process all the different types of concrete data with a single piece of code.
+That's good.
+Now, there may be other times when you wanna have data have behavior, if it's an API that has to be, what I would say, stateful.
+Right, it's gotta maintain sort of state around the API.
+But we gotta be very careful about API design when we do that.
+We'll talk about those things as we go forward.
+Okay, so what I wanna do is give you an example of polymorphism in Go and continue to drive the idea around this idea that concrete data is driving the polymorphism because the concrete data has behavior.
+Now, in this program, we'll start off right out of the box on line 10.
+On line 10, what we have is the `reader` interface.
+Notice that we're using the keyword `type`
+This type `reader` is not based on a struct.
+It's based on the interface.
+Right, it's got one active behavior `read`, which takes a slice of bytes, int, error.
+But let's go back and look at `reader` for a second because this interface type always boggles my mind.
+It's a type, right?
+That means that I can do this.
+I can say `var r reader`.
+I can do that, I can declare a variable of this `reader` type.
+But what blows my mind is the fact that an interface type is not real.
+We've gotta make this very, very clear throughout.
+Interface types are not real.
+`r` is not real, there's nothing concrete about an interface type.
+Struct types, yes, concrete.
+That's real data we can manipulate, we can have fun with it.
+But interfaces are not real.
+They only define a method set of behavior.
+They define a contract of behavior.
+There's nothing real about an interface, nothing at all.
+There's an implementation detail behind `r`, but from our programming model, `r` does not exist.
+It is not real, there's nothing concrete about it.
+This is gonna be an important concept for us to follow through with as we continue to look at this code.
+Okay, so I've defined this interface type as one active behavior `read()`.
+And one of things you know we're looking at mechanics and we'll talk more about this.
+It's very important that your interfaces define a behavior.
+Verbs, right?
+From my perspective, we're reading, we're writing, we're running, we're printing, right.
+Interfaces are about behavior.
+I don't wanna see interfaces that describe things.
+I don't wanna see an animal interface or a house or a user.
+These are not interfaces, those are not behaviors.
+Those are things, that's your concrete data.
+The more you get away from that and the more your interfaces describe behavior, here we've got `reader`, has one active behavior, `read()`, this is behavior, we're gonna be much better off with the decoupling because again, we're focused on what?
+Behavior.
+Behavior, that's it.
+And we haven't been taught that kind of stuff in our object-oriented programming world because we wanna decouple everything.
+I'm trying to go back to, let's use our concrete data 'cause that's the problem and let's decouple what we need to and that's the behavior.
+And I wanna keep this philosophy.
+I wanna keep these mechanics and semantics throughout our entire program.
+Now, I've got the `reader` interface.
+It's got one active behavior.
+`read()` takes a slice of bytes, returns an `int` and an `error`.
+Okay, but let me ask you another question before we get going here.
+You know, I could have defined `read()` to look like this.
+I could've said, you know what, let's do this instead.
+Let's pass in the number of bytes I wanna read and return that slice of bytes out.
+Many of you might argue that this is a simpler API.
+But why is this API horrific?
+Why is line 13 so bad of an API design choice in Go?
+That's because if we design our code or write our code like line 13, every time we make a call to `read()`, we're gonna be allocating on the heap.
+Remember, you have a responsibility in API design, not only to write precise APIs where you avoid misuse and fraud, but you also have a responsibility on the impact your APIs have on the user machine.
+There's an impact here.
+And this one is allocation.
+You might say, Bill, where is the allocation coming from?
+Look, you can't implement methods like this inside the type.
+I'm just doing this, so I can just write a little code to show you that if we were implementing it, where these allocations would come from.
+Look, your first allocation would come from the fact that you are gonna have to make this slice of bytes here based on `n`.
+That's going to be an allocation because `n`, we don't know what compile time, what the backing array should be.
+Immediate allocation, there's one potential allocation for this API design.
+But you might say, you know what, Bill?
+I'm not going to then allow you to pass an `n`.
+I'm gonna make it even simpler.
+I'm just gonna say `read()` and I'll hard code that.
+Yup, okay, compiler knows what the size of the backing array is now.
+We've gotten rid of that allocation, but guess what?
+Eventually, you've gotta return the slice back up.
+That's now gonna cause an allocation on the backing array because you can't have a pointer down the call stack.
+Do you see that this API design is not the right choice?
+Or we're gonna have an API that's gonna be in a tight loop.
+The other API, the one that I've chosen here, doesn't allocate 'cause we're asking the caller to allocate the memory and share it down.
+See, in Go, you do have a lot of control over your memory management because you understand escape analysis and you can drive data down, which means that the caller can define the slice, even hard coded size, share it down the call stack, and there's no allocation.
+Okay, great, just wanna keep bringing up where we can where allocations are gonna be the escape analysis stuff.
+This was one of those places.
+Now, I've got my `reader` interface type, there it is.
+I can declare variables.
+Remember `r` is not real, interfaces are not real.
+Put this into your head, the only real is concrete.
+And on line 15, it's exactly what we've done.
+I got a concrete type named `file`.
+And this file represents a concrete piece of data, some sort of file that you might have on a file system, and I've got just a name in there.
+But more importantly, look on line 20. On line 20, we have declared a method and this method has the same signature as the interface.
+Look at that, `read()`, slice of bytes, `int`, `error`.
+Now, Go is about convention over configuration.
+Listen to every word that I say right now.
+Listen to every single word 'cause not a single word here isn't important.
+Because of the method declaration on line 20, I can now say the following.
+The concrete type `file` now implements the `reader` interface using value semantics.
+Think about everything I just said.
+Every word's important.
+Because of line 20, I can now say the concrete type `file` now implements the `reader` interface using value semantics.
+You see Go is about convention over configuration.
+We do not configure an interface to the concrete type like you might see in other languages.
+In other languages, you probably have to do something like this.
+This is not Go, this is configuration.
+This is going to limit us at the end of the day.
+It actually does limit us and cause our software to have more lines of code.
+Go is about less lines of code.
+Go is about being more productive.
+And because of the static code analysis, it's gonna give us a lot of benefits as I'm gonna show you as we move away from mechanics and into design.
+So we don't have to do this in Go.
+We just have to declare the method like we're going on line 20.
+And the compiler compile time can identify interface compliance, satisfaction.
+Great, so now, the concrete piece of data associated with the concrete type `file`.
+Notice I'm using the word "concrete".
+That struct's concrete.
+Now, implements the `reader` interface, you know, using the value semantics.
+Line 20 again.
+The concrete type `file` now implements the `reader` interface using value semantics, there we go.
+Forget about the implementation, implementation's silly.
+We're just pretending to read a file.
+Now, look, I have a second concrete type named `pipe`, supposed to represent some sort of networking pipe, right.
+But look on line 32.
+I also have a method named `read()` with the same signature, right, that's part of the `reader` interface.
+And therefore, since there's only one method in the `reader` interface, we are satisfying the entire method set of the interface.
+Now, because of this, because on line 32, I can now say the following, the concrete type `pipe` now implements the `reader` interface using value semantics.
+There we are again.
+I have two distinct pieces of data, two concrete types, both with their unique implementation of the `reader` interface.
+Brilliant, this is setting us up for polymorphism.
+Remember what polymorphism says.
+A piece of code changes its behavior depending upon the data, the concrete data, it is operating on.
+Oh god, I love that saying, I love it.
+It gives me chills every time I say it because I really wanna stress this data-oriented design and focusing on the concrete data and letting it drive everything we do, even through the decoupling.
+Okay, let's look at what I would call our polymorphic function.
+There it is on line 50, it's called `retrieve()`.
+```go
+func retrieve(r reader) error {
+	data := make([]byte, 100)
+	
+	len, err := r.read(data)
+	if err != nil {
+		return err
+	}
+	
+	fmt.Println(string(data[:len]))
+	return nil
+}
+```
+This is polymorphic and there's nothing about the concrete.
+In fact, you might even be confused for a second.
+Look at the parameter.
+The parameter in this function seems to say the following.
+It says, pass me a value of type `reader`.
+Can you do that please?
+I would love a value of type `reader`.
+Guess what?
+We already know this is impossible.
+There are no such things as values of type `reader`.
+Values of type `reader` do not exist because `reader` is an interface type and interface types are valueless.
+Whoa, what did I just say?
+Think about this.
+Interface types are valueless.
+So it is impossible for this polymorphic function to be asking for a value of type `reader` because it doesn't exist.
+Well, if it doesn't exist and that's what it's saying, what is then really saying?
+Well, actually, this is what `retrieve()` is saying.
+It is saying, please pass me any piece of concrete data, any value or any pointer, that satisfies, that contains the behavior of `reader`, the full method set of `reader`.
+Think about this again.
+Remember we can only pass concrete data through those program boundaries, through our app.
+That's what's real, that's what we manipulate, that's solving the problem.
+So what is this function saying again?
+Pass me any piece of concrete data, any value, any pointer, that satisfies the `reader` interface and implements this contract that has the data, the full suite of behavior, method sets, that satisfies the `reader`.
+And don't we have two concrete pieces of data in this program already, `file` and `pipe`, that have the full method set of `reader`?
+We do.
+But this is my polymorphic function because it knows nothing about the concrete.
+It can operate against any piece of concrete data that implements the `read()` method.
+And you can see here that we're gonna be executing that behavior through the interface.
+Okay, you know what, let's look at the mechanics on the board.
+Let's draw all this stuff out, so you can see this polymorphism in action, both the semantics side of it and the mechanics.
+Okay, so look what we do right here, right there on line... I gotta turn this around again, line 41.
+Look at line 41, okay, brilliant.
+What are we doing on line 41?
+We are creating a value of type `file`.
+There's `f`, there's our `file` value.
+I'm also creating a value of type `pipe`, there it is, `p`.
+I've got these two values.
+Remember we're constructing to a variable.
+We're gonna use our value semantic construction.
+We've done that, great. But now, look on line 45. On line 45, we're making a call to `retrieve()`.
+Now, I'm always gonna be asking you the same question.
+What semantic is at play when we make this function call?
+In other words, is the function receiving its own copy of the data, value semantics?
+Or is it being shared the data, pointer semantics?
+We look at this and we realize that this polymorphic function is being given a copy, its own copy of the file.
+So we're passing a copy of `f` across this program boundary.
+The compiler during compilation knows that this piece of data implements the `reader` interface using value semantics.
+You can see that during static code analysis.
+Remember retrieve is saying, pass me any concrete piece of data, any value or any pointer, that satisfies, implements the reader interface, has the full suite of behavior.
+We know that this does, right.
+We know that this piece of data has a `read()` method.
+We know it's there.
+Brilliant, now, on the other side though, even though we're giving it this copy, what we have is `r`.
+And `r` is an interface value.
+Now, there's only an implementation detail because from our programming model, `r` is not real.
+It is valueless, there's nothing concrete about it.
+But what is `r` then from an implementation detail?
+`r` is really an interface value, which makes it a reference type.
+And when `r` is set to its zero value, there it is, two pointers, `nil`, `nil`.
+Now, when we pass this concrete piece of data over the program boundary, the whole idea here is there's a relationship between interface values and our concrete data.
+And that is one of storage.
+We store concrete data inside of interface values and when we store the data inside of interface value, that finally makes the interface value concrete.
+Everything's always gotta get back to the concrete.
+So the interfaces are really valueless.
+Through the mechanism of storing, when we pass this concrete data across the program boundary, now, we have something that's more concrete.
+And it's this second word that we're using for storage.
+So look, we made a copy of `f`, we're now storing it inside of the interface.
+This is giving us our levels of decoupling.
+And because we made a copy of `f`, what does that mean?
+It means what?
+Allocation, there it is.
+Allocation, every time I draw that little red, I'm showing hey, allocation.
+So we got an allocation now.
+Brilliant, what about the first word?
+Okay, we're gonna get a little technical here.
+The first word points to a very special internal table that we call the "iTable".
+Now, if you've ever heard of vtables before in an object-oriented programming language, then an iTable's very much like the vtable, but it's an interface, so we replace "v" with "i".
+And vtables are just a matrix of function pointers that allow us to have base class pointers go into derived class objects behavior.
+And the iTable's kind of doing the same thing.
+But the first word of the iTable will always describe the type of value that we're storing inside the interface.
+In this case, we've got a value of type `file`.
+The rest of the iTable will be that function pointer.
+So this is going to basically point to the concrete implementation of `read()` for `file`.
+Right, so what's going to happen now on line 53?
+Remember interfaces are giving us a level of decoupling.
+So on line 53, when we call read, when you call `read()` against the interface, we do an iTable lookup.
+Guess what we have here again?
+Indirection.
+We do an iTable lookup to find out where the implementation of the actual `read()` is and then we call that implementation against, in our case, our copy.
+And there we have indirection.
+Indirection and allocation.
+That is what decoupling costs us.
+But guess what?
+I've got a polymorphic function that can handle any kind of concrete data.
+And remember, `retrieve()` is changing its behavior.
+The call on line 53 is changing its behavior depending on the concrete data it's operating on.
+Right now, `retrieve()` is accessing a file system.
+How cool is that?
+But let's go look at the next thing.
+On line 46, now, we call `retrieve()` again.
+Again, what semantic is at play?
+Value semantics are at play.
+`retrieve()` is gonna receive its own copy, not of `f` this time, but it's gonna retrieve its own copy of `p`.
+And we know `p` also knows how to `read()`.
+That means, this time, the iTable doesn't say `file` here.
+It says, no, no, no, I've got a `pipe` value.
+Brilliant, now this time, when I call `read()` against `r`, we're gonna call `read()` against our copy of `p`.
+Allocation, but the behavior has changed.
+Polymorphism means that a piece of code like `retrieve()` changes its behavior depending upon the concrete data it is operating on.
+It's still all driven from real concrete data.
+This has now made the interface value concrete.
+But at the end of the day, interface values really are valueless.
+They're not real.
+Only the concrete data is real.
+Now moving forward, I don't particularly care about iTables.
+It's a little too technical.
+I want you to know they're there.
+I want you to know that this is a pointer.
+But what I'm gonna be doing moving forward is putting inside of this word, the type of value that we have stored inside of the interface.
+Okay, so I would be saying here that we have a value of type `pipe`.
+That means we're using value semantics with the interface.
+Here's the copy.
+And now, when we're calling `read()` against our copy, then the iTable's giving us all that.
+So there's no magic going on here.
+Now, this is our basic polymorphism in Go.
+It's really showing you when a piece of data should have behavior.
+This is one of those cases when we need to implement polymorphism.
+I cannot stress enough though there is a cost to decoupling here.
+And again, it's the indirection and the allocation.
