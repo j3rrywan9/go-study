@@ -775,3 +775,207 @@ So, if I ever saw code like on line 40, that would really scare me.
 We wanna really maintain our value semantics.
 We'll continue to talk about that, but I wanna show you here how Go's able to adjust to make the call to match the receiver type with the data that's there.
 Okay, so what I wanna do next, now, is really try to give you some guidelines around when we should be using value semantics and when we should be using pointer semantics so we can come back into this code in a bit and get a better understanding of what we're doing in this code block and why.
+
+### 4.1 Methods - Part 2 (Value & Pointer Semantics)
+
+So now I wanna give you some general guidelines on when to be using value semantics and when to be using pointer semantics.
+There are exceptions to everything, that's important, but if you don't know when to take the exception, don't.
+Engineering is all about choices, it's about cost, it's about knowing when to take those exceptions.
+So these general guidelines are very, very good and they're gonna work for you most of the time and they're gonna keep you out of a lot of trouble.
+Remember, semantic consistency is everything.
+So let's go and start taking a look at some code, and we're gonna pull some code from the standard library, but before we start with this code, let's look at what we're dealing with here.
+There are really three classes of types that we're gonna be working with in a Go program.
+You're gonna have the built-in types, your numerics, your string and your bool, you're gonna have the reference types, slices, maps, channels, interface values and functions, right?
+These are the reference types, and then you're gonna have the user defined types.
+These are really gonna be your struct types.
+There are really three classes of types that we deal with, or three classes of data that we deal with that we've gotta make these decisions on.
+So I'm gonna make this as simple as I can for you.
+If you are working with the built-in types, strings, numerics, and bool, you are to be using value semantics.
+In other words, I don't wanna see any code that takes a pointer to an int, any numeric, a string, or a bool, I don't wanna see that.
+Everybody can get their own copy of the built-in types, in fact, strings are designed, they're mutable, they're designed to be copied.
+Right, we saw that before.
+So when we're dealing with these built-in types, including fields in a struct, I don't wanna see pointers.
+Everything should be value based.
+Now, there are some exceptions.
+I'll give you one exception.
+If you're dealing with a SQL database, and you have a struct that's going to be used to be un-marshalling or marshalling data, the concept of row doesn't exist unless there's a pointer.
+So if it's not obvious to me, but that struct's being used as some sort of relational database scheme and I see a pointer, you know, we've gotta have a conversation.
+So when I say value semantics, I mean not only value's being passed in and out of our function, I also mean the fields when we're defining a struct.
+Okay, so that's it, right?
+Built-in types, value semantics.
+Everybody gets the concept.
+Reference types, we're gonna follow the same rule.
+Value semantics for reference types, I don't wanna see you take the address of a reference type.
+There's one exception to this, however.
+A slice and a map, you may take the address of a slice or a map only if you're sharing it down the call stack and to a function that's either named `decode` or `unmarshall`.
+That's it.
+I see that, we're not gonna have a conversation, that's reasonable, practical, decoding and un-marshaling require pointer semantics, and those data structures, slices and maps, are collections of data.
+Other than that, everybody should get a copy of the slice value, the map.
+Since maps and channels, anyway, are pointers, there's no reason to take the address of the address, and in our slice you'll see our interface values, or data structures.
+Still, it doesn't matter, they're designed to be copied to stay on stacks, that means fields should also respect the value semantic form, in other words, I don't wanna see pointers to slices, pointers to interfaces.
+We're going to do that.
+Value semantics all the way for those reference types, except for the exception I gave you.
+Great, so that means 2/3 of the types are using value semantics, right?
+This is fantastic, I've told you, value semantics are a really important part of your ability to keep the heap clean which is going to give us a tremendous amount of performance.
+But not all data can leverage the value semantics, and when it comes to our struct types this is where things get interesting.
+You've got to choose, if you're defining your own struct type, what semantic is going to be in play.
+You're gonna hear me say that a lot, now.
+What's in play, what's in play?
+And if you're not sure what to use then we're gonna use those pointer semantics, okay?
+And then if you're absolutely sure that we can use value semantics, guess what?
+We want to use those value semantics.
+They're really our first choice.
+Pointer semantics are really the exception, when we need it.
+But I wanna take a look at some standard library code, to kind of bring this stuff home.
+And I want you to look at these two types that I've pulled from the `net` package.
+Line 20 and line 21. Now, again, what we would say is, "Hey, we're declaring a new type named IP, which is based on a slice of bytes."
+Line 21, new type named `IPMask` which is based on a slice of bytes.
+And what we really have here now is two brand new types that are truly based on a slice.
+That means that they are reference types.
+IP is a reference type, IPMask is a reference type, and what do I tell you?
+Reference types follow value semantics.
+Now based on that, we shouldn't be very surprised about line 26.
+Look at how this method is being declared.
+Notice that it's using value semantics.
+But notice that `Mask()` is a mutation API.
+You might think, "Well, hmm, Mask() is gonna have to mutate, I shouldn be using pointer semantics."
+No, you would be wrong.
+You remember the code, the methods, the functions, the code has to respect the semantic, its type, semantic and code.
+So notice that `Mask()` is a value semantics mutation API, it gets its own copy of `IP`.
+It mutates that copy, and then returns a new copy out.
+Look at what it's doing.
+And this is a very safe mutation, isn't it?
+Because the mutation happens in isolation in our sandbox.
+It can't create side effects.
+This is a beautiful thing.
+But the choice of this API is driven off the fact that `IP` is a reference type based on its declaration of being based on a slice of bytes.
+Notice you're also passing a value of `IPMask`.
+Why?
+It's a reference type.
+And this goes beyond just the method receivers.
+Here's a function, a value of type `IP`, returns a value of type `string`, why? Strings are built-in type value semantics, `IP`'s a reference type value semantic.
+You will see this throughout the entire standard library.
+There is nothing random about code in the standard library.
+It follows these semantic rules to a `T`, and there are very, very few exceptions, there, and you can go and search for this stuff yourself.
+This is the key to having a code base that can be maintained by more than one person over time and can grow and maintain a consistency which is gonna, again, help reduce bugs and give everybody the ability to predict reasonably well how this code is gonna behave on the machine it's running on.
+
+Now, let's talk about those struct types again.
+When there's a struct type you have to decide what semantic you're going to use.
+Here's the struct type for `Time`. I pulled this out of the `Time` package.
+So let me ask you a question.
+If I asked you to write the Time API, and I've given you this struct, what semantic would you choose?
+Would you choose value semantics or pointer semantics?
+Remember, you have to choose a semantic before you write a line of code.
+Let me give you a couple of questions you can ask yourself, which in many cases can help.
+It doesn't help all the time, but sometimes this helps.
+So let's start with Time.
+If I gave you a value of type `Time`, here it is, here's my value, remember, data is concrete, here's my concrete `Time` value.
+Now, if I add 5 seconds to this value, is it the same value, just slightly mutated, or is it a new value?
+Is two different points in time discrete data, different data, or the same data mutated?
+I would argue that if I add 5 seconds to this `Time` value, I have a brand new piece of data.
+And when we have that scenario it's usually a good indication that value semantics could be at play here.
+That we can make copies of this data and mutations make new copies of data.
+We do this with strings, right?
+You mutate a string, you get a new string.
+So that's interesting.
+Now what if I was dealing with a `User` type?
+Should we be making copies of users?
+And this isn't a technical question, I'm not asking you if technically it's safe, I'm asking should we, from a correctness standpoint, right?
+It's not optimizing for performance, it's optimizing for correctness.
+Now, I could make an argument here.
+If I met you, and I just started calling you Jack for the rest of the day, like I decide I don't know your name but I don't care, I'm gonna change your name, you are now Jack for the rest of the day.
+Does that make you somebody different?
+If I take a user value and change their name is it the same user, just slightly modified?
+Or is it a completely new user?
+It's not a new person, right?
+It isn't, it's just somebody whose name has changed.
+That's a good indication that we probably should be using pointer semantics.
+But I also want to apply the idea that since we can't make copies of people in the real world, why would we do something like that in our software?
+Our brains would not reasonably predict that sort of behavior, because we don't do that in the real world.
+We need to bring all of this stuff into a code base, when we're coding we don't want to confuse people.
+So probably users should be using pointer semantics, because mutation doesn't create a new piece of data, it just modifies the existing data.
+This is a great question to ask, it doesn't always help you answer the question, but it's a good starting point and when you're not sure you should always be using pointer semantics because it's always safer to share than make copies because not all data can be copied.
+
+So let's see what the language team decided to use for `Time`.
+Now, what I've done is I've pulled the factory function out of the standard library.
+Your factory function should always come before the type.
+And they are the most important function in the API, because the factory function tells you the semantic that is at play, the semantic that has been chosen by the developer.
+Where is it coming from?
+The return, look.
+The `Now()` function is returning a value of type `Time`.
+You are getting your own copy of the `Time` value.
+What is the factory function saying to you?
+It's saying that value semantics are at play.
+I am creating a `Time` value, I'm giving you your own copy, you can give other people copy, store it as a value, leverage the value semantics, keep this data on the stack, to the extent that we can, make your fields also of the `Time` value.
+Brilliant.
+Factory functions are everything.
+This is where we start, this is where we choose our semantic.
+If you're working with a struct type that you're not familiar with, maybe part of a standard library or somebody else's library, look for that factory function, and I pray it's right after the type.
+Shouldn't be hard to find.
+And leverage this information that I've highlighted, to show you and tell you how to work with the data correctly.
+Now, since value semantics are at play, look at `Add()`.
+`Add()` is a mutation API.
+But it's not using pointer semantics, it's using value semantics, right?
+A value semantic mutation.
+This is not an accident, this is not random.
+The code, the functions, the method has to respect the semantic, not the other way around.
+So `Add()` gets its own `Time` value, mutates its own `Time` value in isolation within its sandbox, right?
+Levels of immutability.
+And then returns a new one out.
+This is gonna allow us not to have any side effects while all this stuff is going.
+This is beautiful stuff.
+`Time` can be using value semantics, the API is using value semantics.
+Okay, here's another function called `div()`.
+Takes a value of type `Time`, value of type `Duration`, value of type `int`, value of type `Duration`.
+`Duration` too, leveraging value semantics.
+If you saw the declaration of `Duration`, it's really a type that's based on an `int64`.
+`int64` is a built-in type.
+Aw, look what's happening.
+Look, the reality now is that you can look at almost any type in your language, identify what it is, or its base, and start to understand already what semantic you should be using.
+And nothing should be random.
+Code that has semantic consistency is going to always be better over the inconsistencies.
+
+Okay, here's another factory.
+Oh, that's right, I forgot about this.
+Look, I told you there are exceptions to everything, and here's one of those exceptions.
+When you are implementing or using functions that have `unmarshall` or `decode` in it they require naturally to have pointer semantics.
+You need to share because they're gonna be mutated.
+So here are four APIs in the `Time` package that are switching semantics from value to pointer, but guess what?
+Unmarshall, decode, unmarshall, unmarshall, they're implementing contracts or interfaces for this behavior.
+Absolutely fine, that's reasonable, practical.
+But if I saw the pointer semantics for anything else, it would raise a really big flag with me.
+
+Okay, look, here is a factory function for the file, for OS.
+Notice that this factory function returns not a value of type `File` but a pointer of type `File`.
+You see that?
+What does this mean?
+It means that pointer semantics are at play.
+It also means that you do not have a right, remember this, this is incredibly important.
+You do not have a right to make a copy of a value that a pointer points to when it's been shared with you like that.
+Assume that it is dangerous to make copies if something has been shared.
+Put that in your head, that is a major violation of semantic law.
+We do not make copies that pointers point to.
+Assume that that is very, very bad.
+Now look at the `Chdir()` method.
+It doesn't mutate the value used to make the call, but it's still using pointer semantics because that type requires pointer semantics.
+Again, with this function here, pointer semantics, because we have to use, the API, the code, has to respect the semantic and not the other way around.
+It doesn't get to choose the semantic.
+We define the data, we define the type, we get the semantic, and we write code.
+This is critical.
+
+So to sum up.
+* Built-in types, value semantics.
+* Reference types, value semantics, except for decoding and unmarshalling.
+* And then our struct types we have to make a choice, if you're not sure, you use the pointer semantics first.
+ 
+I want you to remember that you can choose a semantic in the beginning, realize that you're wrong, and then just refactor that the other way.
+We are working on mostly close-based source code systems, right?
+Private source-code systems.
+Unless you're doing open source, we have the right to break APIs.
+We're gonna talk more about this during design.
+I want to break APIs when we do things that are wrong.
+If we're dealing with open source that's been versioned, then we can't break APIs, but we can always add new ones and deprecate old ones to make improvements.
+We've got to constantly be reviewing the code we're writing, adjusting the code, refactoring that code and making it better.
+So I don't wanna get hung up where we're like, stuck, because I don't know what semantic to choose.
+Choose a semantic, be consistent, and if it's the wrong one, no problem.
+We'll refactor later.
