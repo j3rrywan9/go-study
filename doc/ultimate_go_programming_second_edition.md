@@ -496,3 +496,126 @@ And Joe Beda whose company called Heptio, great company, said this, and I love t
 So anytime I look at a function or a method, and I'm seeing that this is an abstraction, right?
 We're seeing encapsulation, I wanna make sure that these encapsulations are not just testable, I wanna make sure that they're providing a new semantic precise level of understanding that is not hiding cost okay?
 But hiding complexity.
+
+## Lesson 2: Language Syntax
+
+This is where we begin to start learning how to read code in Go with the understanding that every decision you make comes with a cost.
+Nothing is free, what benefit are you taking for the cost that you're taking?
+And this is where we start to begin to look at the cost of things.
+We're gonna learn how pointers work and memory works, which is so critical if you really want to understand the cost of things.
+We're gonna learn how important it is to really understand how things work in terms of memory.
+We're gonna get through all of that and language syntax that's important for our ability to be able to predict reasonably well how code is gonna run on the machine.
+
+### 2.1 Variables
+
+Variables, all right, so in this section, we're gonna talk about variables, but trust me, this material assumes that you are already a software developer, you know what variables are.
+I'm not teaching you variables from the very beginning.
+They are just the things here that I need to talk about to help us develop a base knowledge of material as we continue to grow in complexity in our ability to read and write code in Go, so I really hope you stick out this section.
+I'm not teaching you what a variable is, but there are some very important things here.
+So we're gonna scroll down now into this area where we have the code review.
+We'll be using the Go Playground for a lot of this.
+
+Now, one of the things that I want to talk to you about is type.
+Type is everything.
+Type is life, and I promise you one day, if I get a little too drunk, I'm gonna go to a tattoo parlor and I'm gonna write type life right here in my knuckles, that's how important it is.
+Actually, if that ever happens, you can just laugh at me for the rest of your life, but type is everything.
+Type is life.
+Without type, we can't really have integrity and we can't really start to understand the cost of the decisions we are making in our code.
+I mean, start with this right here.
+Our basic unit of memory that we're gonna be working with in our programming model is a byte, and a byte is 8 bit, so now I've just drawn a byte right now here on the board with a particular bit pattern.
+Now, what I would like to ask you is, what is the value of this byte?
+What does this byte, what is the value I've just stored inside this box?
+The reality is you cannot answer this question unless I give you the type information, unless you know what this bit pattern represents.
+Now, if I tell you that this represents an integer, now you can tell me, well, Bill, that represents the number 10, brilliant.
+But if I said nah, it doesn't represent an integer, it represents a color, now you gotta say, Bill, what is number 10 on your color chart?
+And I might say to you, oh, yeah, yeah, no, no, that's red.
+So you could see that this bit pattern can represent an infinite number of things, it's all based on what the type information is.
+Now, type provides us two pieces of information, size, how much memory, how many bytes of memory we need to read or write at any given time, and its representation, what it represents, and Go is not being novel in many many cases that you really already know the syntax of this language, I don't have to really teach too much syntax, and just like other programming languages, Go has the built-in types, your numerics, your string, and your bool.
+What you are seeing on lines 15 through 18 in the code is just that, those built-in types being used, and if you look at the name of the types, start at 17, I love looking at 17, the name of the type `float64` tells us two things, look, I want you to look at some of this early material differently than you ever have before, but I'm not necessarily teaching you anything new, I wanna give you a different perspective on what's happening here.
+So again, we can have this foundational material and understanding as things get more complex.
+When you look at the name `float64`, it's really interesting because it tells us both parts of the type information, `float64`, "64" tells us that it's an eight byte, 64 bit value that's giving us the cost in terms of memory footprint, and "float" tells us it's an IEEE 754 binary decimal.
+You see how the name in this case is giving us both pieces of type information.
+We know a bool is one byte, we only need one bit for that byte, on or off, true or false, and then when you get to `int`, it's really interesting.
+There is precision based integers, `int8` and `int16` and `int32`, and `int64`.
+But if I saw you using a precision based integer and it wasn't obvious to me why, that would raise a flag to me during a code review.
+Now, when I say raising a flag, it doesn't mean it's wrong, it is not obvious to me why you're making a particular choice and I would wanna talk about it, and there are times when you need a precision based integer if we are using the atomic instructions or if you're doing something that has to be the same size across multiple platforms, but most of the time, we're just gonna use `int`, which can seem confusing because all this type name is giving us is half of the type information, all it's telling us is that whatever number of bytes we're going to allocate, they only represent an integer value.
+So when the question comes, if we don't understand size, we don't understand cost, so how much memory is allocated for an integer?
+Well, this is all gonna be based on the architecture that we are building for.
+Now, most of you, if you type Go space version into your command line, you're gonna see that you're using AMD64 as your architecture.
+Some of you might be on an ARM processor, but for the most part, you're probably all using AMD64, which tells us that we are on a 64-bit architecture.
+Now, we stick with AMD64 for a second.
+What that's gonna mean from a Go perspective is that since we're gonna work on a 64-bit architecture, that means that our pointer size or the address size is gonna be 64 bits or eight bytes.
+And the way Go kinda works is this.
+If we look at what the address size is gonna be for the architecture that we're on, AMD64, 64 bit, eight bytes.
+Then we say, okay, our generic word size, when you hear me use the term word throughout the class, we're talking about a value that can change size depending on the architecture, so our word size is gonna match the architecture, that's 64 bits or eight bytes, and then Go says, if your address and your word size is 64 bits or eight bytes, let's just make the integer follow.
+That will be 64 bits or eight bytes.
+All three are always going to be the same.
+Now, this gets interesting because you're seeing code on the Playground, the Playground is a single threaded environment, when we get to the concurrency stuff, we won't really be able to use it.
+But what's also interesting is the Playground is an amd64p32 architecture, p32, it's a native client architecture.
+What that means is that addresses are 32 bits on this architecture.
+For all intents and purposes, it's a 32-bit architecture because our address scheme is four bytes or 32 bits, which now means what, addresses are four byte, 32 bits, word size is four byte, 32 bits, therefore our integer's four bytes or 32 bits.
+So we see that our integer can change size depending on architecture, and there is mechanical sympathies for this.
+The hardware or the architecture is basically saying that four byte integers is gonna be more efficient than eight byte integers on our 64 bit, we're saying eight byte integers are more efficient, right, so we're trying to gain mechanical sympathies for the platform that we are building on when it comes to the address, the word size and the integer, and that's why we want to use int and not a precision based integer unless it's something very specific like we have to and it's very obvious we wanna do that.
+
+Now, there is another concept here, I would call it one of Go's wars.
+There is a war in Go and it's that there's too many to declare variables and to create values in Go, and we'll talk about this early on in the class, but what you're noticing here is I'm using the keyword `var` to declare these variables.
+Now, there is a concept called zero values.
+Zero value's very very important, and it's an integrity play in Go, and I want us to understand that, again, the cost of integrity is performance, so this little performance hit will never show up in a profile, I mean machine's very very fast, but we want it.
+And what zero value says is all memory that we allocate gets initialized at least to its zero value state.
+In other words, any time we allocate a byte of memory, if we don't pre-initialize it with some value, and we're gonna run electrons through the machine and make sure that we set it all to zero.
+This is going to help with a huge number of bugs that we found in the past where a program starts up, it allocates a variable, it doesn't initialize it, the bit pattern is reasonable enough and the program starts running, and it's running, but it's also in a corrupted state, so zero value's an integrity play and it's very very important.
+One of the things we're gonna do in this code base, one of the things I follow, is that if I'm going to declare a variable, create some value like this, declare a variable and it's gonna be set to its zero value state, I'm gonna use `var`.
+`var` is that kind of readability marker that we are declaring and initializing to zero value, and `var` gives us zero value 100% of the time in this language, and I'll show you some examples later on where if you use, if you're not using `var`, you're not getting zero value, and there's one more type here and it's called `string`.
+And string's a really kind of made up datatype for any language, and there's different ways to implement strings.
+Go has what I would call a unique way, I had never seen it before up until Go.
+Now, when we look at on line 16 and we say this `var b string`, what we're seeing is a string being declared and created setting it to its zero value which is what we call an empty string, and so an empty string in Go is going to look something like this.
+`b` is going to be a two word data structure, strings are two words.
+Notice I'm using the term word because the size of a string will change depending on the architecture, on the Playground the word is gonna be two, four byte words, so that's eight bytes, on our 64 bit, it'll be 16 two eight byte words, there it is, where the first word is a pointer, we're gonna talk about pointers and the next word is the number of bytes.
+Since this is an empty string, we don't have any pointer to a backing array yet, and there are no bytes.
+So a word is a two word data value, eight to 16 bytes of depending upon architecture.
+Again, I want to talk about cost, engineering cost, so we can predict reasonably well how things are going to run, how things are gonna happen in memory, so type is important, the size of things can be important, we really want to understand the cost of the things we're taking.
+Now, you're probably not gonna always want to create, construct, and initialize to zero value.
+There are gonna be times where you wanna pre-initialize something, and this is where the short variable declaration operator comes from, that is the `:=` that you see here on line 27.
+A lot of people think that this syntax from the language comes from C, but actually, the Pascal programming language had a large influence also in the syntax of this language.
+This is one of those places where Pascal comes from.
+Now, this operator is really a productivity operator, it's allowing us to declare and initialize at the same time, I don't want to use the concept that that Go has duck typing, it doesn't.
+It's really struct-based typing, but in this particular case, I want us to always look at the short variable declaration operator as a productivity operator, so `aa` is 10, `bb` is string, `cc` is a float, and `dd` is bool, and it's based on the fact that the compiler knows what type of value is sitting on the other side of that short variable declaration.
+And if we go back to "hello" for a second, what "hello" would look like from a string now, is an array of five bytes, right, H-E-L-L-O.
+Our pointer would point to that, and we would say we have five bytes right there.
+We're gonna go deeper into this stuff as the class goes on, but I really believe in visuals, being able to visualize code and early on in my career, I used to keep a piece of paper at my desk with a pen and I would draw these things out.
+So what you're seeing me draw on the board is really my mental models, my visual mental models of code and how things go and you're gonna see a lot of that throughout this class and I really think it helps and it's something that it might help you as well.
+So we've got the short variable declaration operator when it's something that's gonna not be zero value.
+Now, you might see code like this, and I could see this.
+I'm using the short variable declaration operator to assign or declare an integer and set it a zero value.
+There's nothing necessarily wrong with this.
+A big part of what we are gonna learn about writing code and mental models is consistency.
+If you wanna do this, then be consistent.
+I wouldn't.
+I would use `var` for zero value, because I think the readability marker of `var` is just way too strong to walk away, and if I was doing a code review, I would ask us to switch that to `var`, but it's not for any other reason for readability and consistency and readability.
+So I don't want to do that, you won't see that in this code base, but that's up to you.
+As long as everybody on your team is doing it the same way, then it's going to be okay.
+
+Now, there's one more concept here that I want to talk about, and it's called conversion.
+Go doesn't have casting, it has conversion. And what conversion means really is that we may be taking a cost, a memory cost, as we convert values from one type to the other.
+If you've never heard of casting before, what casting has done traditionally and it's really a part of helping with performance, is saying this following thing.
+Let's say that we allocated a one byte integer.
+There it is, there is my one byte integer.
+Let's say for some silly crazy reason, I decide that I really want `a`, not to represent a one byte integer, but a four byte integer.
+Casting will allow me to do something like this, where I could tell the compiler, look, you know and I know that `a` is an `int8` or one byte integer, but casting let's us pretend that what that memory really is a 4-byte integer, and the compiler trusting us will just say, okay, and suddenly now, if I'm casting `a` from one bytes to four bytes, I have the ability to read and write memory across those four bytes from this particular location.
+I could be potentially corrupting a lot of memory here.
+Now, this is a silly example because really, where casting traditionally comes in is kind of two places.
+One, if you're dealing with data coming over the wire and you've got large number of bytes, you probably would like blindly copy those bytes somewhere in memory and then you would cast or overlay a structure on top of it, right?
+And that's gonna be very very very fast.
+You're just gonna say, hey, those bytes over there, those 20 bytes starting at that address location, they really represent this structure, and then that's gonna let you, because without type, you can't read and write to memory, it's gonna let us do that, but if you're off by one byte, then we've got real problems, so casting comes with the idea that if you're off, or seeing that one byte is you overlay that struct, now you are reading and writing the bytes you didn't.
+And that's a real real problem with casting, so Go says, look, integrity is number one.
+We care about integrity as our highest priority, so you can use the `unsafe` package to do some casting, what we'd rather have is conversion, what Go would say here is we don't wanna even set up this scenario, so if you really want `a` to be four bytes, then we're gonna convert `a` into a new value that will be four bytes and maybe, and in this particular case, even have to give it a new variable name, in this case in the sample, we used `aaa`.
+But the idea of conversion over casting is again, is an integrated play.
+There could be a cost of new memory but we always rather be safe than sorry.
+So this is what I wanna share with you in the variable section, you already know what a variable is, but to sum up here, okay, type is everything.
+Type is life.
+It gives us two pieces of information, size of the memory that we're gonna be allocating and reading and writing and what that memory represents, and without the type information, we will have chaos.
+It gives us the levels of integrity we need, right?
+We have the idea of zero value in Go, and I wanna use the keyword `var` for that.
+All memory's initialized at least to a zero value state.
+We can use the short variable declaration operator when we are initializing something to it other than a zero value state.
+There is exceptions to everything, and part of engineering is knowing when to take that exception, but these are the guidelines we're gonna be following, and we have conversion over casting, again, it's an integrity play to keep our software, again, and our data and our memory safe.
