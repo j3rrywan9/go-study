@@ -663,6 +663,32 @@ I want you to think about this for a second.
 To allow data to have behavior.
 Now, Go has functions, we've been looking at functions since we started, but Go also has the concept of a method, and a method is a function, a function that has what we call a receiver.
 So, let's take a look at what a method looks like in Go.
+```go
+import "fmt"
+
+type user struct {
+	name string
+	email string
+}
+
+func (u user) notify() {
+	fmt.Printf("Sending User Email To %s<%s>\n", u.name, u.email)
+}
+
+func (u *user) changeEmail(email string) {
+	u.email = email
+}
+
+func main() {
+	bill := user{"Bill", "bill@email.com"}
+	bill.changeEmail("bill@hotmail.com")
+	bill.notify()
+	
+	joan := &user{"Joan", "joan@email.com"}
+	joan.changeEmail("joan@hotmail.com")
+	joan.notify()
+}
+```
 Here's our user-defined type, it's `user`.
 It's got a `name` and an `email`, and if I scroll up just a little bit above the type, you see two methods.
 I always want those methods to come after the type.
