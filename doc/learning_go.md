@@ -318,23 +318,70 @@ This still points to the original data, which means that the original data can b
 
 ## Chapter 7. Types, Methods, and Interfaces
 
+As we saw in earlier chapters, Go is a statically typed language with both built-in types and user-defined types.
+Like most modern languages, Go allows you to attach methods to types.
+It also has type abstraction, allowing you to write code that invokes methods without explicitly specifying the implementation.
+
+However, Go's approach to methods, interfaces, and types is very different from most other languages in common use today.
+Go is designed to encourage the best practices that are advocated by software engineers, avoiding inheritance while encouraging composition.
+In this chapter, we'll take a look at types, methods, and interfaces, and see how to use them to build testable and maintainable programs.
+
 ### Types in Go
 
 In addition to struct literals, you can use any primitive type or compound type literal to define a concrete type.
+Here are a few examples:
+```go
+type Score int
+type Converter func(string)Score
+type TeamScores map[string]Score
+```
 
 ### Methods
 
 Like most modern languages, Go supports methods on user-defined types.
 
+The methods for a type are defined at the package block level:
+```go
+type Person struct {
+    FirstName string
+    LastName string
+    Age int
+}
+
+func (p Person) String() string {
+    return fmt.Sprintf("%s %s, age %d", p.FirstName, p.LastName, p.Age)
+}
+```
 Method declarations look just like function declarations, with one addition: the *receiver* specification.
 The receiver appears between the keyword `func` and the name of the method.
 Just like all other variable declarations, the receiver name appears before the type.
 By convention, the receiver name is a short abbreviation of the type's name, usually its first letter.
 It is non-idiomatic to use `this` or `self`.
 
+Just like functions, method names cannot be overloaded.
+You can use the same method names for different types, but you can't use the same method name for two different methods on the same type.
+While this philosophy feels limiting when coming from languages that have method overloading, not reusing names is part of Go's philosophy of making clear what your code is doing.
+
+We'll talk more about packages in Chapter 9, but be aware that methods must be declared in the same package as their associated type; Go doesn't allow you to add methods to types you don't control.
+While you can define a method in a different file within the same package as the type declaration, it is best to keep your type definition and its associated methods together so that it's easy to follow the implementation.
+
+#### Pointer Receivers and Value Receivers
+
+#### Code Your Methods for `nil` Instances
+
+#### Methods Are Functions Too
+
+#### Functions Versus Methods
+
+#### Type Declarations Aren't Inheritance
+
+#### Types Are Executable Documentation
+
+#### `iota` Is for Enumerations - Sometimes
+
 ### Use Embedding for Composition
 
-While Go doesn't have inheritance, it encourages code reuse via built in support for composition and promotion.
+While Go doesn't have inheritance, it encourages code reuse via built-in support for composition and promotion:
 ```go
 type Employee struct {
     Name string
@@ -357,10 +404,31 @@ func (m Manager) FindNewEmployees() []Employee {
 Note that `Manager` contains a field of type `Employee`, but no name is assigned to that field.
 This makes `Employee` an *embedded field*.
 Any fields or methods declared on an embedded field are *promoted* to the containing struct and can be invoked directly on it.
+That makes the following code valid:
+```go
+m := Manager{
+    Employee: Employee{
+        Name:         "Bob Bobson",
+        ID:             "12345",
+    },
+    Reports: []Employee{},
+}
+fmt.Println(m.ID)            // prints 12345
+fmt.Println(m.Description()) // prints Bob Bobson (12345)
+```
 
 ### Embedding Is Not Inheritance
 
+Built-in embedding support is rare in programming languages (I'm not aware of another popular language that supports it).
+Many developers who are familiar with inheritance (which is available in many languages) try to understand embedding by treating it as inheritance.
+That way lies tears.
+You cannot assign a variable of type Manager to a variable of type Employee.
+If you want to access the Employee field in Manager, you must do so explicitly.
+
 ### A Quick Lesson on Interfaces
+
+While Go's concurrency model (which we cover in Chapter 10) gets all of the publicity, the real star of Go's design is its implicit interfaces, the only abstract type in Go.
+Let's see what makes them so great.
 
 In an interface declaration, an interface literal appears after the name of the interface type.
 It lists the methods that must be implemented by a concrete type to meet the interface.
