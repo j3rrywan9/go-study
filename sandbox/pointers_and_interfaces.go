@@ -4,25 +4,25 @@ import (
 	"fmt"
 )
 
-// interface Animal
+// Animal interface
 type Animal interface {
 	Speak() string
 }
 
-// type Cat
+// Cat struct
 type Cat struct {
 }
 
-// method Speak() of type Cat with a pointer receiver
+// Speak method of Cat with a pointer receiver
 func (c *Cat) Speak() string {
 	return "Meow!"
 }
 
-// type Dog
+// Dog struct
 type Dog struct {
 }
 
-// method Speak() of type Dog with a pointer receiver
+// Speak method of Dog with a pointer receiver
 func (d *Dog) Speak() string {
 	return "Woof!"
 }
