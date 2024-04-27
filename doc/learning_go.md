@@ -237,7 +237,7 @@ If you do that, you *shadow* the identifier created in the outer block.
 We've already seen functions being declared and used.
 Every program we've written has a `main` function that's the starting point for every Go program, and we've been calling the `fmt.Println` function to display output to the screen.
 
-### Simulating Named and Optional Parameters
+#### Simulating Named and Optional Parameters
 
 Before we get to the unique function features that Go has, let's mention two that Go *doesn't* have: named and optional input parameters.
 If you want to emulate named and optional parameters, define a struct that has fields that match the desired parameters, and pass the struct to your function.
@@ -265,7 +265,7 @@ func main() {
 }
 ```
 
-### Variadic Input Parameters and Slices
+#### Variadic Input Parameters and Slices
 
 Like many languages, Go supports *variadic parameters*.
 The variadic parameter must be the last (or only) parameter in the input parameter list.
@@ -273,15 +273,110 @@ You indicate it with three dots (`...`) before the type.
 The variable that's created within the function is a slice of the specified type.
 You use it just like any other slice.
 
-### Multiple Return Values
+#### Multiple Return Values
 
 The first difference that we'll see between Go and other languages is that Go allows for multiple return values.
+
+There are a few changes to support multiple return values.
+When a Go function returns multiple values, the types of the return values are listed in parentheses, separated by commas.
+Also, if a function returns multiple values, you must return all of them, separated by commas.
+
+#### Ignoring Returned Values
+
+If a function returns multiple values, but you don't need to read one or more of the values, assign the unused values to the name `_`.
+Surprisingly, Go does let you implicitly ignore *all* of the return values for a function.
+
+#### Named Return Values
+
+#### Blank Returns - Never Use These!
+
+### Functions Are Values
+
+Just as in many other languages, functions in Go are values.
+The type of a function is built out of the keyword `func `and the types of the parameters and return values.
+This combination is called the *signature* of the function.
+Any function that has the exact same number and types of parameters and return values meets the type signature.
+
+Since functions are values, you can declare a function variable:
+```go
+var myFuncVariable func(string) int
+```
+
+The default zero value for a function variable is `nil`.
+
+#### Function Type Declarations
+
+Just as you can use the `type` keyword to define a `struct`, you can use it to define a function type too (I'll go into more details on type declarations in Chapter 7):
+```go
+type opFuncType func(init, int) int
+```
+
+#### Anonymous Functions
+
+You can not only assign functions to variables, but also define new functions within a function and assign them to variables.
+
+Inner functions are *anonymous*; they don't have a name.
+You declare an anonymous function with the keyword `func` immediately followed by the input parameters, the return values, and the opening brace.
+It is a compile-time error to try to put a function name between `func` and the input parameters.
+
+Just like any other function, an anonymous function is called by using parentheses.
+
+You don't have to assign an anonymous function to a variable.
+You can write them inline and call them immediately.
+The previous program can be rewritten into this:
+```go
+func main() {
+	for i := 0; i < 5; i++ {
+		func(j int) {
+			fmt.Println("printing", j, "from inside of an anonymous function")
+		}(i)
+	}
+}
+```
+
+Now, this is not something that you would normally do.
+If you are declaring and executing an anonymous function immediately, you might as well get rid of the anonymous function and just call the code.
+However, declaring anonymous functions without assigning them to variables is useful in two situations: `defer` statements and launching goroutines.
+
+Before using a package-level anonymous function, be very sure you need this capability.
+Package-level state should be immutable to make data flow easier to understand.
+If a function's meaning changes while a program is running, it becomes difficult to understand not just how data flows, but how it is processed.
+
+### Closure
+
+Functions declared inside functions are special; they are *closures*.
+This is a computer science word that means that functions declared inside functions are able to access and modify variables declared in the outer function.
+
+#### Passing Functions as Parameters
+
+Since functions are values and you can specify the type of a function using its parameter and return types, you can pass functions as parameters into functions.
+If you aren't used to treating functions like data, you might need a moment to think about the implications of creating a closure that references local variables and then passing that closure to another function.
+It's a very useful pattern that appears several times in the standard library.
+
+#### Returning Functions from Functions
+
+In addition to using a closure to pass some function state to another function, you can also return a closure from a function.
+
+### `defer`
+
+Programs often create temporary resources, like files or network connections, that need to be cleaned up.
+This cleanup has to happen, no matter how many exit points a function has, or whether a function completed successfully or not.
+In Go, the cleanup code is attached to the function with the `defer` keyword.
+
+First, you make sure that a filename was specified on the command line by checking the length of `os.Args`, a slice in the `os` package.
+The first value in `os.Args` is the name of the program.
+The remaining values are the arguments passed to the program.
+
+### Go Is Call by Value
+
+You might hear people say that Go is a _call-by-value_ language and wonder what that means.
+It means that when you supply a variable for a parameter to a function, Go _always_ makes a copy of the value of the variable.
 
 ## Chapter 6. Pointers
 
 ### A Quick Pointer Primer
 
-A pointer is simply a variable that holds the location in memory where a value is stored.
+A _pointer_ is simply a variable that holds the location in memory where a value is stored.
 
 Every variable is stored in one or more contiguous memory locations, called *addresses*.
 Different types of variables can take up different amounts of memory.
@@ -290,35 +385,113 @@ A pointer is simply a variable whose contents are the address where another vari
 
 While different types of variables can take up different numbers of memory locations, every pointer, no matter what type it is pointing to, is always the same size: a number that holds the location in memory where the data is stored.
 
+A pointer holds a number that indicates the location in memory where the data being pointed to is stored.
+That number is called the _address_.
+
 The zero value for a pointer is `nil`.
 
 Go's pointer syntax is partially borrowed from C and C++.
 Since Go has a garbage collector, most of the pain of memory management is removed.
 Furthermore, some of the tricks that you can do with pointers in C and C++, including *pointer arithmetic* are not allowed in Go.
 
+The `&` is the address operator.
+It precedes a value type and returns the address where the value is stored:
+```go
+x := "hello"
+pointerToX := &x
+```
+
+The `*` is the indirection operator.
+It precedes a variable of pointer type and returns the pointed-to value.
+This is called _dereferencing_:
+```go
+x := 10
+pointerToX := &x
+fmt.Println(pointerToX)  // prints a memory address
+fmt.Println(*pointerToX) // prints 10
+z := 5 + *pointerToX
+fmt.Println(z)           // prints 15
+```
+Before dereferencing a pointer, you must make sure that the pointer is non-nil.
+Your program will panic if you attempt to dereference a `nil` pointer:
+```go
+var x *int
+fmt.Println(x == nil) // prints true
+fmt.Println(*x)       // panics
+```
+A _pointer type_ is a type that represents a pointer.
+It is written with a `*` before a type name.
+A pointer type can be based on any type:
+```go
+x := 10
+var pointerToX *int
+pointerToX = &x
+```
 The built-in function `new` creates a pointer variable.
 It returns a pointer to a zero-value instance of the provided type.
 ```go
 var x = new(int)
-fmt.Println(x == nil)
-fmt.Println(*x)
+fmt.Println(x == nil) // prints false
+fmt.Println(*x)       // prints 0
+```
+The `new` function is rarely used.
+For structs, use an `&` before a struct literal to create a pointer instance.
+You can't use an & before a primitive literal (numbers, booleans, and strings) or a constant because they don't have memory addresses; they exist only at compile time.
+When you need a pointer to a primitive type, declare a variable and point to it:
+```go
+x := &Foo{}
+var y string
+z := &y
 ```
 
 ### Don't Fear The Pointers
 
-The difference between Go and these languages is that Go gives you the *choice* to use pointers or values for both primitives and structs.
+The first rule of pointers is to not be afraid of them.
+If you are used to Java, JavaScript, Python, or Ruby, you might find pointers intimidating.
+However, pointers are actually the familiar behavior for classes.
+It's the nonpointer structs in Go that are unusual.
+
+What you are seeing is that every instance of a class in these languages is implemented as a pointer.
+When a class instance is passed to a function or method, the value being copied is the pointer to the instance.
+
+The difference between Go and these languages is that Go gives you the _choice_ to use pointers or values for both primitives and structs.
 Most of the time, you should use a value.
-They make it easier to understand how and when your data is modified.
+Values make it easier to understand how and when your data is modified.
 A secondary benefit is that using values reduces the amount of work that the garbage collector has to do.
 
 ### Pointers Indicate Mutable Parameters
 
+As you've already seen, Go constants provide names for literal expressions that can be calculated at compile time.
+Go has no mechanism to declare that other kinds of values are immutable.
+
 However, if a pointer is passed to a function, the function gets a copy of the pointer.
 This still points to the original data, which means that the original data can be modified by the called function.
 
+### Pointers Are a Last Resort
+
+### Pointer Passing Performance
+
+If a struct is large enough, using a pointer to the struct as either an input parameter or a return value improves performance.
+The time to pass a pointer into a function is constant for all data sizes, roughly one nanosecond.
+This makes sense, as the size of a pointer is the same for all data types.
+
+### The Zero Value Versus No Value
+
+Again, JSON conversions are the exception that proves the rule.
+When converting data back and forth from JSON (yes, I'll talk more about the JSON support in Go's standard library in "encoding/json"), you often need a way to differentiate between the zero value and not having a value assigned at all.
+Use a pointer value for fields in the struct that are nullable.
+
+### The Difference Between Maps and Slices
+
+### Slices as Buffers
+
+### Reducing the Garbage Collector's Workload
+
+### Tuning the Garbage Collector
+
 ## Chapter 7. Types, Methods, and Interfaces
 
-As we saw in earlier chapters, Go is a statically typed language with both built-in types and user-defined types.
+As you saw in earlier chapters, Go is a statically typed language with both built-in types and user-defined types.
 Like most modern languages, Go allows you to attach methods to types.
 It also has type abstraction, allowing you to write code that invokes methods without explicitly specifying the implementation.
 
@@ -328,6 +501,15 @@ In this chapter, we'll take a look at types, methods, and interfaces, and see ho
 
 ### Types in Go
 
+Back in "Structs", you saw how to define a struct type:
+```go
+type Person struct {
+    FirstName string
+    LastName  string
+    Age       int
+}
+```
+This should be read as declaring a user-defined type with the name `Person` to have the _underlying type_ of the struct literal that follows.
 In addition to struct literals, you can use any primitive type or compound type literal to define a concrete type.
 Here are a few examples:
 ```go
@@ -358,14 +540,31 @@ Just like all other variable declarations, the receiver name appears before the 
 By convention, the receiver name is a short abbreviation of the type's name, usually its first letter.
 It is non-idiomatic to use `this` or `self`.
 
+There is one key difference between declaring methods and functions: methods can be defined _only_ at the package block level, while functions can be defined inside any block.
+
 Just like functions, method names cannot be overloaded.
 You can use the same method names for different types, but you can't use the same method name for two different methods on the same type.
 While this philosophy feels limiting when coming from languages that have method overloading, not reusing names is part of Go's philosophy of making clear what your code is doing.
 
-We'll talk more about packages in Chapter 9, but be aware that methods must be declared in the same package as their associated type; Go doesn't allow you to add methods to types you don't control.
+We'll talk more about packages in Chapter 10, but be aware that methods must be declared in the same package as their associated type; Go doesn't allow you to add methods to types you don't control.
 While you can define a method in a different file within the same package as the type declaration, it is best to keep your type definition and its associated methods together so that it's easy to follow the implementation.
 
+Method invocations should look familiar to those who have used methods in other languages:
+```go
+p := Person{
+    FirstName: "Fred",
+    LastName:  "Fredson",
+    Age:       52,
+}
+output := p.String()
+```
+
 #### Pointer Receivers and Value Receivers
+
+As I covered in Chapter 6, Go uses parameters of pointer type to indicate that a parameter might be modified by the function.
+The same rules apply for method receivers too.
+They can be _pointer receivers_ (the type is a pointer) or _value receivers_ (the type is a value type).
+The following rules help you determine when to use each kind of receiver:
 
 #### Code Your Methods for `nil` Instances
 
@@ -377,7 +576,11 @@ While you can define a method in a different file within the same package as the
 
 #### Types Are Executable Documentation
 
-#### `iota` Is for Enumerations - Sometimes
+### `iota` Is for Enumerations - Sometimes
+
+Many programming languages have the concept of enumerations, which allow you to specify that a type can have only a limited set of values.
+Go doesn't have an enumeration type.
+Instead, it has `iota`, which lets you assign an increasing value to a set of constants.
 
 ### Use Embedding for Composition
 
@@ -408,8 +611,8 @@ That makes the following code valid:
 ```go
 m := Manager{
     Employee: Employee{
-        Name:         "Bob Bobson",
-        ID:             "12345",
+        Name: "Bob Bobson",
+        ID:   "12345",
     },
     Reports: []Employee{},
 }
@@ -422,18 +625,50 @@ fmt.Println(m.Description()) // prints Bob Bobson (12345)
 Built-in embedding support is rare in programming languages (I'm not aware of another popular language that supports it).
 Many developers who are familiar with inheritance (which is available in many languages) try to understand embedding by treating it as inheritance.
 That way lies tears.
-You cannot assign a variable of type Manager to a variable of type Employee.
-If you want to access the Employee field in Manager, you must do so explicitly.
+You cannot assign a variable of type `Manager` to a variable of type `Employee`.
+If you want to access the `Employee` field in `Manager`, you must do so explicitly.
 
 ### A Quick Lesson on Interfaces
 
-While Go's concurrency model (which we cover in Chapter 10) gets all of the publicity, the real star of Go's design is its implicit interfaces, the only abstract type in Go.
+While Go's concurrency model (which we cover in Chapter 12) gets all of the publicity, the real star of Go's design is its implicit interfaces, the only abstract type in Go.
 Let's see what makes them so great.
 
+Let's start by taking a quick look at how to declare interfaces.
+At their core, interfaces are simple.
+Like other user-defined types, you use the `type` keyword.
+
+Here's the definition of the `Stringer` interface in the `fmt` package:
+```go
+type Stringer interface {
+    String() string
+}
+```
 In an interface declaration, an interface literal appears after the name of the interface type.
 It lists the methods that must be implemented by a concrete type to meet the interface.
-The methods defined by an interface are called the method set of the interface.
+The methods defined by an interface are the method set of the interface.
 
 Interfaces are usually named with "er" endings.
 
 ### Interfaces are Type-Safe Duck Typing
+
+So far, nothing that's been said about the Go interface is much different from interfaces in other languages.
+What makes Go's interfaces special is that they are implemented `implicitly`.
+As you've seen with the `Counter` struct type and the `Incrementer` interface type that you've used in previous examples, a concrete type does not declare that it implements an interface.
+If the method set for a concrete type contains all the methods in the method set for an interface, the concrete type implements the interface.
+Therefore, that the concrete type can be assigned to a variable or field declared to be of the type of the interface.
+
+To understand why, let's talk about why languages have interfaces.
+Earlier I mentioned that _Design Patterns_ taught developers to favor composition over inheritance.
+Another piece of advice from the book is "Program to an interface, not an implementation."
+Doing so allows you to depend on behavior, not on implementation, allowing you to swap implementations as needed.
+This allows your code to evolve over time, as requirements inevitably change.
+
+## Chapter 16. Here Be Dragons: Reflect, Unsafe, and Cgo
+
+All of those things are true, and for the vast majority of the Go code that you'll write, you can be assured that the Go runtime will protect you.
+But there are escape hatches.
+Sometimes your Go programs need to venture out into less defined areas.
+In this chapter, you're going to look at how to handle situations that can't be solved with normal Go code.
+For example, when the type of the data can't be determined at compile time, you can use the reflection support in the `reflect` package to interact with and even construct data.
+When you need to take advantage of the memory layout of data types in Go, you can use the `unsafe` package.
+And if there is functionality that can only be provided by libraries written in C, you can call into C code with `cgo`.
